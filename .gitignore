@@ -1,0 +1,41 @@
+# Go back
+# 忽略编译后的二进制文件
+back/my-awesome-project
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 忽略测试覆盖率文件
+*.out
+*.cover
+
+# ---
+
+# Vue front (Node)
+# 忽略依赖文件夹
+front/node_modules/
+# 忽略日志文件
+front/npm-debug.log*
+front/yarn-debug.log*
+front/yarn-error.log*
+front/pnpm-debug.log*
+# 忽略构建产物
+front/dist/
+front/.output/
+# 忽略 Vite 缓存
+front/.vite-inspect/
+
+# ---
+
+# IDE & OS specific
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+.DS_Store
