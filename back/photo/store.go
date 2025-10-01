@@ -1,0 +1,5 @@
+package photo
+
+func uploadPhotoStore() {
+
+}
