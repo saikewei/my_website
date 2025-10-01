@@ -39,3 +39,4 @@ front/.vite-inspect/
 *.sw?
 *~
 .DS_Store
+back/config/config.yaml
