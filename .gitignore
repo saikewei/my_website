@@ -40,3 +40,5 @@ front/.vite-inspect/
 *~
 .DS_Store
 back/config/config.yaml
+
+temp_photos/
