@@ -18,5 +18,5 @@ func main() {
 
 	photo.RegisterRouters(apiGroup)
 
-	r.Run(":9000") // 监听并在
+	r.Run(":9000") // 监听
 }

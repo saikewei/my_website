@@ -2,7 +2,7 @@ package photo
 
 import "time"
 
-type Photo struct {
+type PhotoMeta struct {
 	ID           int32
 	AlbumID      int32     // 所属相册ID, 关联albums.id (可以为空, 代表未分类)
 	Title        string    // 照片标题
