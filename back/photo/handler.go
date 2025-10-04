@@ -21,11 +21,6 @@ func uploadPhoto(c *gin.Context) {
 		return
 	}
 
-	if err := uploadPhotoFileService(c, file); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	var newPhotoMeta PhotoMeta
 	metaStr := c.PostForm("meta")
 	if err := json.Unmarshal([]byte(metaStr), &newPhotoMeta); err != nil {
@@ -33,8 +28,24 @@ func uploadPhoto(c *gin.Context) {
 		return
 	}
 
-	//将照片信息存储到数据库
-	if err := uploadPhotoMetaStore(newPhotoMeta); err != nil {
+	errChan := make(chan error)
+
+	go func() {
+		if err := uploadPhotoFileService(file); err != nil {
+			errChan <- err
+			return
+		}
+
+		//将照片信息存储到数据库
+		if err := uploadPhotoMetaStore(newPhotoMeta); err != nil {
+			errChan <- err
+			return
+		}
+
+		errChan <- nil
+	}()
+
+	if err := <-errChan; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
