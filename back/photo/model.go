@@ -26,5 +26,5 @@ type PhotoMeta struct {
 	FlashFired   *bool    // 是否使用闪光灯
 	GpsLatitude  *float64 // GPS纬度
 	GpsLongitude *float64 // GPS经度
-	TagsID       []int32  // 照片标签, 关联tags表 (多对多关系)
+	Tags         []string // 照片标签, 关联tags表 (多对多关系)
 }

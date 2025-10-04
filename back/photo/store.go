@@ -8,6 +8,23 @@ import (
 )
 
 func uploadPhotoMetaStore(newPhotoMeta PhotoMeta) error {
+	var oldTagsID []int32
+	var newTags []*model.Tag
+
+	if len(newPhotoMeta.Tags) > 0 {
+		for _, tag := range newPhotoMeta.Tags {
+			tagID, err := findTagIDByName(tag)
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					newTags = append(newTags, &model.Tag{Name: tag})
+				} else {
+					return err
+				}
+			} else {
+				oldTagsID = append(oldTagsID, tagID)
+			}
+		}
+	}
 
 	return database.DB.Transaction(func(tx *gorm.DB) error {
 		txq := query.Use(tx)
@@ -45,19 +62,39 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoMeta) error {
 			return err
 		}
 
-		if len(newPhotoMeta.TagsID) > 0 {
+		// 处理标签
+		if len(newTags) > 0 {
+			if err := txq.Tag.CreateInBatches(newTags, 100); err != nil {
+				return err
+			}
+
+			for _, tag := range newTags {
+				oldTagsID = append(oldTagsID, tag.ID)
+			}
+		}
+
+		if len(oldTagsID) > 0 {
 			var photoTags []*model.PhotoTag
-			for _, tagID := range newPhotoMeta.TagsID {
+			for _, tagID := range oldTagsID {
 				photoTags = append(photoTags, &model.PhotoTag{
 					PhotoID: photo.ID,
 					TagID:   tagID,
 				})
 			}
-			if err := txq.PhotoTag.CreateInBatches(photoTags, len(photoTags)); err != nil {
+			if err := txq.PhotoTag.CreateInBatches(photoTags, 100); err != nil {
 				return err
 			}
 		}
 
 		return nil
 	})
+}
+
+func findTagIDByName(tagName string) (int32, error) {
+	var tag model.Tag
+	err := database.DB.Where("name = ?", tagName).First(&tag).Error
+	if err != nil {
+		return 0, err
+	}
+	return tag.ID, nil
 }
