@@ -98,3 +98,39 @@ func findTagIDByName(tagName string) (int32, error) {
 	}
 	return tag.ID, nil
 }
+
+func createAlbumStore(album Album) error {
+	modelAlbum := model.Album{
+		Title:        album.Title,
+		Description:  album.Description,
+		CoverPhotoID: album.CoverPhotoID,
+	}
+
+	if modelAlbum.CoverPhotoID != nil {
+		_, err := checkPhotoExists(*modelAlbum.CoverPhotoID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return database.DB.Create(&modelAlbum).Error
+}
+
+func checkPhotoExists(photoID int32) (bool, error) {
+	var count int64
+	err := database.DB.Model(&model.Photo{}).Where("id = ?", photoID).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// TODO:preload用不了，需要改join
+func findPhotoByID(photoID int32) (*model.Photo, error) {
+	var photo model.Photo
+	err := database.DB.Preload("Metadata").Preload("Tags").First(&photo, photoID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &photo, nil
+}

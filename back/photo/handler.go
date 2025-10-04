@@ -11,6 +11,7 @@ func RegisterRouters(router gin.IRouter) {
 	photoGroup := router.Group("/photo")
 	{
 		photoGroup.POST("/upload", uploadPhoto)
+		photoGroup.POST("/create-album", createAlbum)
 	}
 }
 
@@ -53,4 +54,29 @@ func uploadPhoto(c *gin.Context) {
 	// 返回成功响应
 
 	c.JSON(http.StatusOK, gin.H{"message": "照片上传成功！", "photo": newPhotoMeta})
+}
+
+func createAlbum(c *gin.Context) {
+	var newAlbum Album
+	if err := c.ShouldBindJSON(&newAlbum); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	errChan := make(chan error)
+
+	go func() {
+		if err := createAlbumStore(newAlbum); err != nil {
+			errChan <- err
+			return
+		}
+		errChan <- nil
+	}()
+
+	if err := <-errChan; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "相册创建成功！", "album": newAlbum})
 }
