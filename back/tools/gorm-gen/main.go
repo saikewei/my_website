@@ -18,8 +18,9 @@ func main() {
 	}
 
 	g := gen.NewGenerator(gen.Config{
-		OutPath:      "../../internal/model/query",
-		ModelPkgPath: "../../internal/model",
+		OutPath:       "../../internal/model/query",
+		ModelPkgPath:  "../../internal/model",
+		FieldNullable: true,
 
 		Mode: gen.WithoutContext | gen.WithDefaultQuery,
 	})

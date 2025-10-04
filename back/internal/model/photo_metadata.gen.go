@@ -8,17 +8,17 @@ const TableNamePhotoMetadatum = "photo_metadata"
 
 // PhotoMetadatum mapped from table <photo_metadata>
 type PhotoMetadatum struct {
-	PhotoID      int32   `gorm:"column:photo_id;primaryKey" json:"photo_id"`
-	CameraID     int32   `gorm:"column:camera_id;comment:相机ID, 关联cameras.id" json:"camera_id"`         // 相机ID, 关联cameras.id
-	LensID       int32   `gorm:"column:lens_id;comment:镜头ID, 关联lenses.id" json:"lens_id"`              // 镜头ID, 关联lenses.id
-	FocalLength  string  `gorm:"column:focal_length;comment:焦距 (例如: 85mm)" json:"focal_length"`        // 焦距 (例如: 85mm)
-	Aperture     string  `gorm:"column:aperture;comment:光圈 (例如: f/1.8)" json:"aperture"`               // 光圈 (例如: f/1.8)
-	ShutterSpeed string  `gorm:"column:shutter_speed;comment:快门速度 (例如: 1/1000s)" json:"shutter_speed"` // 快门速度 (例如: 1/1000s)
-	Iso          string  `gorm:"column:iso;comment:ISO感光度 (例如: 100)" json:"iso"`                       // ISO感光度 (例如: 100)
-	ExposureBias string  `gorm:"column:exposure_bias;comment:曝光补偿 (例如: +0.7 EV)" json:"exposure_bias"` // 曝光补偿 (例如: +0.7 EV)
-	FlashFired   bool    `gorm:"column:flash_fired;comment:是否使用闪光灯" json:"flash_fired"`                // 是否使用闪光灯
-	GpsLatitude  float64 `gorm:"column:gps_latitude;comment:GPS纬度" json:"gps_latitude"`                // GPS纬度
-	GpsLongitude float64 `gorm:"column:gps_longitude;comment:GPS经度" json:"gps_longitude"`              // GPS经度
+	PhotoID      int32    `gorm:"column:photo_id;primaryKey" json:"photo_id"`
+	CameraID     *int32   `gorm:"column:camera_id;comment:相机ID, 关联cameras.id" json:"camera_id"`         // 相机ID, 关联cameras.id
+	LensID       *int32   `gorm:"column:lens_id;comment:镜头ID, 关联lenses.id" json:"lens_id"`              // 镜头ID, 关联lenses.id
+	FocalLength  *string  `gorm:"column:focal_length;comment:焦距 (例如: 85mm)" json:"focal_length"`        // 焦距 (例如: 85mm)
+	Aperture     *string  `gorm:"column:aperture;comment:光圈 (例如: f/1.8)" json:"aperture"`               // 光圈 (例如: f/1.8)
+	ShutterSpeed *string  `gorm:"column:shutter_speed;comment:快门速度 (例如: 1/1000s)" json:"shutter_speed"` // 快门速度 (例如: 1/1000s)
+	Iso          *string  `gorm:"column:iso;comment:ISO感光度 (例如: 100)" json:"iso"`                       // ISO感光度 (例如: 100)
+	ExposureBias *string  `gorm:"column:exposure_bias;comment:曝光补偿 (例如: +0.7 EV)" json:"exposure_bias"` // 曝光补偿 (例如: +0.7 EV)
+	FlashFired   *bool    `gorm:"column:flash_fired;comment:是否使用闪光灯" json:"flash_fired"`                // 是否使用闪光灯
+	GpsLatitude  *float64 `gorm:"column:gps_latitude;comment:GPS纬度" json:"gps_latitude"`                // GPS纬度
+	GpsLongitude *float64 `gorm:"column:gps_longitude;comment:GPS经度" json:"gps_longitude"`              // GPS经度
 }
 
 // TableName PhotoMetadatum's table name

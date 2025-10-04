@@ -14,8 +14,8 @@ const TableNameAlbum = "albums"
 type Album struct {
 	ID           int32     `gorm:"column:id;primaryKey;autoIncrement:true" json:"id"`
 	Title        string    `gorm:"column:title;not null;comment:相册标题" json:"title"`                         // 相册标题
-	Description  string    `gorm:"column:description;comment:相册描述" json:"description"`                      // 相册描述
-	CoverPhotoID int32     `gorm:"column:cover_photo_id;comment:封面照片ID, 关联photos.id" json:"cover_photo_id"` // 封面照片ID, 关联photos.id
+	Description  *string   `gorm:"column:description;comment:相册描述" json:"description"`                      // 相册描述
+	CoverPhotoID *int32    `gorm:"column:cover_photo_id;comment:封面照片ID, 关联photos.id" json:"cover_photo_id"` // 封面照片ID, 关联photos.id
 	CreatedAt    time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
