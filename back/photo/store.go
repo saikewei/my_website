@@ -107,9 +107,11 @@ func createAlbumStore(album Album) error {
 	}
 
 	if modelAlbum.CoverPhotoID != nil {
-		_, err := checkPhotoExists(*modelAlbum.CoverPhotoID)
+		exist, err := checkPhotoExists(*modelAlbum.CoverPhotoID)
 		if err != nil {
 			return err
+		} else if !exist {
+			return gorm.ErrRecordNotFound
 		}
 	}
 
@@ -125,12 +127,39 @@ func checkPhotoExists(photoID int32) (bool, error) {
 	return count > 0, nil
 }
 
-// TODO:preload用不了，需要改join
+func checkAlbumExists(albumID int32) (bool, error) {
+	var count int64
+	err := database.DB.Model(&model.Album{}).Where("id = ?", albumID).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func findPhotoByID(photoID int32) (*model.Photo, error) {
 	var photo model.Photo
-	err := database.DB.Preload("Metadata").Preload("Tags").First(&photo, photoID).Error
+	err := database.DB.First(&photo, photoID).Error
 	if err != nil {
 		return nil, err
 	}
 	return &photo, nil
+}
+
+func addPhotoToAlbumStore(pa PhotoAlbum) error {
+	result := database.DB.Model(&model.Photo{}).
+		Where("id = ?", pa.PhotoID).
+		Update("album_id", pa.AlbumID)
+
+	// 2. 检查执行过程中是否发生错误
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// 3. 检查是否有行被实际更新
+	if result.RowsAffected == 0 {
+		// 如果没有行被更新，说明传入的 PhotoID 不存在
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
 }

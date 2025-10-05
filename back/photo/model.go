@@ -37,3 +37,8 @@ type Album struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+type PhotoAlbum struct {
+	PhotoID int32 `json:"photo_id"`
+	AlbumID int32 `json:"album_id"`
+}
