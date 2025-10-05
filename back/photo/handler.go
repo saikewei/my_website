@@ -44,11 +44,9 @@ func uploadPhoto(c *gin.Context) {
 	}
 
 	err = utils.RunTaskAsync(func() error {
-		if err := uploadPhotoFileService(file); err != nil {
+		if path, size, err := uploadPhotoFileService(file); err != nil {
 			return err
-		}
-
-		if err := uploadPhotoMetaStore(newPhotoMeta); err != nil {
+		} else if err := uploadPhotoMetaStore(newPhotoMeta, path, size); err != nil {
 			return err
 		}
 		return nil

@@ -1,13 +1,15 @@
 package photo
 
 import (
+	"path/filepath"
+
 	"github.com/saikewei/my_website/back/internal/database"
 	"github.com/saikewei/my_website/back/internal/model"
 	"github.com/saikewei/my_website/back/internal/model/query"
 	"gorm.io/gorm"
 )
 
-func uploadPhotoMetaStore(newPhotoMeta PhotoMeta) error {
+func uploadPhotoMetaStore(newPhotoMeta PhotoMeta, filePath string, fileSize int64) error {
 	var oldTagsID []int32
 	var newTags []*model.Tag
 
@@ -33,9 +35,9 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoMeta) error {
 			AlbumID:     newPhotoMeta.AlbumID,
 			Title:       newPhotoMeta.Title,
 			Description: newPhotoMeta.Description,
-			FilePath:    newPhotoMeta.FilePath,
-			FileName:    newPhotoMeta.FileName,
-			FileSize:    newPhotoMeta.FileSize,
+			FilePath:    filePath,
+			FileName:    filepath.Base(filePath),
+			FileSize:    int32(fileSize),
 			Width:       newPhotoMeta.Width,
 			Height:      newPhotoMeta.Height,
 			IsFeatured:  newPhotoMeta.IsFeatured,
