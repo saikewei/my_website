@@ -1,5 +1,5 @@
 <template>
-    <h1>Admin Page</h1>
+    <h1>后台</h1>
     <div class="page-container">
         <nav-admin />
         <div class="content">
