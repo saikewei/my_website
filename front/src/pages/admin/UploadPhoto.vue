@@ -1,7 +1,9 @@
 <template>
     <div>
-        <h1>Upload Photo Page</h1>
-        This is a page to upload photo.
+        <h1>上传照片</h1>
+        点击上传照片
+        <el-button type="primary">上传</el-button>
+
     </div>
 </template>
 

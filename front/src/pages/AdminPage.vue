@@ -1,5 +1,7 @@
 <template>
-    <h1>后台</h1>
+    <div class="header-container">
+      <h1>后台</h1>
+    </div>
     <div class="page-container">
         <nav-admin />
         <div class="content">
@@ -21,5 +23,12 @@ import { RouterView } from 'vue-router';
 
 .content {
   margin-left: 20px;
+}
+
+.header-container {
+  background-color: #4f5d64; /* 与导航菜单颜色匹配 */
+  padding: 20px;
+  color: white;
+  margin-bottom: 1px;
 }
 </style>
