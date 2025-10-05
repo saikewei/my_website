@@ -36,7 +36,7 @@ func uploadPhoto(c *gin.Context) {
 		return
 	}
 
-	var newPhotoMeta PhotoMeta
+	var newPhotoMeta PhotoUpload
 	metaStr := c.PostForm("meta")
 	if err := json.Unmarshal([]byte(metaStr), &newPhotoMeta); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

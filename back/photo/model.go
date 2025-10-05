@@ -2,22 +2,17 @@ package photo
 
 import "time"
 
-type PhotoMeta struct {
+type PhotoUpload struct {
 	ID           int32      `json:"id"`
-	AlbumID      *int32     `json:"album_id,omitempty"`    // 所属相册ID, 关联albums.id (可以为空, 代表未分类)
-	Title        string     `json:"title"`                 // 照片标题
-	Description  *string    `json:"description,omitempty"` // 照片描述或背后的故事
-	FilePath     string     `json:"file_path"`             // 文件存储路径 (例如: /uploads/2024/09/your-photo.jpg)
-	FileName     string     `json:"file_name"`             // 原始文件名
-	FileSize     int32      `json:"file_size"`             // 文件大小 (Bytes)
-	Width        int32      `json:"width"`                 // 图片宽度 (px)
-	Height       int32      `json:"height"`                // 图片高度 (px)
-	IsFeatured   bool       `json:"is_featured"`           // 是否为精选照片
-	ShotAt       *time.Time `json:"shot_at,omitempty"`     // 拍摄时间
+	FilePath     string     `json:"file_path"`         // 文件存储路径 (例如: /uploads/2024/09/your-photo.jpg)
+	FileName     string     `json:"file_name"`         // 原始文件名
+	FileSize     int32      `json:"file_size"`         // 文件大小 (Bytes)
+	Width        int32      `json:"width"`             // 图片宽度 (px)
+	Height       int32      `json:"height"`            // 图片高度 (px)
+	IsFeatured   bool       `json:"is_featured"`       // 是否为精选照片
+	ShotAt       *time.Time `json:"shot_at,omitempty"` // 拍摄时间
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
-	CameraID     *int32     `json:"camera_id,omitempty"`     // 相机ID, 关联cameras.id
-	LensID       *int32     `json:"lens_id,omitempty"`       // 镜头ID, 关联lenses.id
 	FocalLength  *string    `json:"focal_length,omitempty"`  // 焦距 (例如: 85mm)
 	Aperture     *string    `json:"aperture,omitempty"`      // 光圈 (例如: f/1.8)
 	ShutterSpeed *string    `json:"shutter_speed,omitempty"` // 快门速度 (例如: 1/1000s)

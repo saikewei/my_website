@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func uploadPhotoMetaStore(newPhotoMeta PhotoMeta, filePath string, fileSize int64) error {
+func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize int64) error {
 	var oldTagsID []int32
 	var newTags []*model.Tag
 
@@ -32,16 +32,14 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoMeta, filePath string, fileSize int6
 		txq := query.Use(tx)
 
 		photo := model.Photo{
-			AlbumID:     newPhotoMeta.AlbumID,
-			Title:       newPhotoMeta.Title,
-			Description: newPhotoMeta.Description,
-			FilePath:    filePath,
-			FileName:    filepath.Base(filePath),
-			FileSize:    int32(fileSize),
-			Width:       newPhotoMeta.Width,
-			Height:      newPhotoMeta.Height,
-			IsFeatured:  newPhotoMeta.IsFeatured,
-			ShotAt:      newPhotoMeta.ShotAt,
+			Title:      "无标题",
+			FilePath:   filePath,
+			FileName:   filepath.Base(filePath),
+			FileSize:   int32(fileSize),
+			Width:      newPhotoMeta.Width,
+			Height:     newPhotoMeta.Height,
+			IsFeatured: newPhotoMeta.IsFeatured,
+			ShotAt:     newPhotoMeta.ShotAt,
 		}
 		if err := txq.Photo.Create(&photo); err != nil {
 			return err
@@ -49,8 +47,6 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoMeta, filePath string, fileSize int6
 
 		metadata := model.PhotoMetadatum{
 			PhotoID:      photo.ID,
-			CameraID:     newPhotoMeta.CameraID,
-			LensID:       newPhotoMeta.LensID,
 			Aperture:     newPhotoMeta.Aperture,
 			ShutterSpeed: newPhotoMeta.ShutterSpeed,
 			Iso:          newPhotoMeta.Iso,
