@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/saikewei/my_website/back/internal/utils"
 )
 
 func RegisterRouters(router gin.IRouter) {
@@ -29,24 +31,18 @@ func uploadPhoto(c *gin.Context) {
 		return
 	}
 
-	errChan := make(chan error)
-
-	go func() {
+	err = utils.RunTaskAsync(func() error {
 		if err := uploadPhotoFileService(file); err != nil {
-			errChan <- err
-			return
+			return err
 		}
 
-		//将照片信息存储到数据库
 		if err := uploadPhotoMetaStore(newPhotoMeta); err != nil {
-			errChan <- err
-			return
+			return err
 		}
+		return nil
+	})
 
-		errChan <- nil
-	}()
-
-	if err := <-errChan; err != nil {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -63,17 +59,11 @@ func createAlbum(c *gin.Context) {
 		return
 	}
 
-	errChan := make(chan error)
+	err := utils.RunTaskAsync(func() error {
+		return createAlbumStore(newAlbum)
+	})
 
-	go func() {
-		if err := createAlbumStore(newAlbum); err != nil {
-			errChan <- err
-			return
-		}
-		errChan <- nil
-	}()
-
-	if err := <-errChan; err != nil {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
