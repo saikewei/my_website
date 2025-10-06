@@ -28,20 +28,82 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ElMessage, type UploadInstance, type UploadProps, type UploadRawFile } from 'element-plus';
+import { ElMessage, type UploadInstance, type UploadProps, type UploadRawFile, type UploadFile } from 'element-plus';
 import ExifReader from 'exifreader';
+import request from '@/utils/request';
+
+interface UploadFileWithMeta extends UploadFile {
+    metaData?: CleanExifData;
+}
+
+interface CleanExifData {
+    width?: number;
+    height?: number;
+    is_featured: boolean;
+    tags: string[];
+    shot_at: string | null;
+    focal_length?: string;
+    aperture?: string;
+    shutter_speed?: string;
+    iso?: string;
+    exposure_bias?: string;
+    flash_fired: boolean;
+    gps_latitude?: number;
+    gps_longitude?: number;
+    camera?:string;
+    lens?:string;
+}
 
 const uploadRef = ref<UploadInstance>();
-const filelist = ref([]);
+const filelist = ref<UploadFileWithMeta[]>([]);
+
+const extractCleanExif = (tags: ExifReader.Tags): CleanExifData => {
+    const getDesc = (tagName: string): string | undefined => tags[tagName]?.description;
+    const getValue = (tagName: string): unknown => tags[tagName]?.value;
+
+    // 处理拍摄时间，将其转换为 ISO 8601 格式
+    let shotAt: string | null = null;
+    const dateTimeOriginal = getDesc('DateTimeOriginal');
+    if (dateTimeOriginal) {
+        let timeStr = dateTimeOriginal.replace(':', '-').replace(':', '-');
+        timeStr = timeStr.replace(' ', 'T'); // 将日期和时间之间的空格替换为 'T'
+        
+        const offset = getDesc('OffsetTimeOriginal') || '+00:00';
+        shotAt = `${timeStr}${offset}`;
+    }
+
+    const isoValue = getValue('ISOSpeedRatings') as number | undefined;
+
+    return {
+        width: getValue('Image Width') as number | undefined,
+        height: getValue('Image Height') as number | undefined,
+        is_featured: false, // 默认值，后续可在UI中修改
+        tags: [], // 默认值，后续可在UI中添加
+        shot_at: shotAt,
+        focal_length: getDesc('FocalLength'),
+        aperture: getDesc('FNumber'),
+        shutter_speed: getDesc('ExposureTime'),
+        iso: isoValue !== undefined ? String(isoValue) : undefined,
+        exposure_bias: getDesc('ExposureBiasValue') ? `${getDesc('ExposureBiasValue')} EV` : undefined,
+        flash_fired: getDesc('Flash')?.includes('did not fire') === false,
+        gps_latitude: getValue('GPSLatitude') as number | undefined,
+        gps_longitude: getValue('GPSLongitude') as number | undefined,
+        camera: getDesc('Model'),
+        lens: getDesc('LensModel'),
+    };
+};
+
 
 const handleChange: UploadProps['onChange'] = async (uploadFile) => {
-    if(uploadFile.raw){
+    if(uploadFile.raw && uploadFile.status === 'ready'){
         try {
-            const tags = await ExifReader.load(uploadFile.raw);
+            const rawTags = await ExifReader.load(uploadFile.raw);
             // 删除体积较大的缩略图数据，以便于在控制台查看
-            if (tags.Thumbnail) {
-                delete tags.Thumbnail;
-            }
+            delete rawTags.Thumbnail;
+
+            const tags = extractCleanExif(rawTags);
+
+            (uploadFile as UploadFileWithMeta).metaData = tags;
             
             if (Object.keys(tags).length > 0) {
                 console.log(`照片[${uploadFile.name}]的EXIF信息:`, tags);
@@ -64,12 +126,41 @@ const handleBeforeUpload: UploadProps['beforeUpload'] = (rawFile: UploadRawFile)
 }
 
 const submitUpload = () => {
-  // 注意：你需要将 el-upload 的 action 属性设置为你真实的后端上传API地址
-  // 这里我们调用 submit 方法来手动触发上传
-  // 由于 action="#" 是一个无效地址，实际上传会失败，但会执行 before-upload 钩子
-  // 在实际项目中，你需要一个真实的后端接口
-  uploadRef.value!.submit();
-  ElMessage.info("请查看浏览器控制台输出的元数据。实际上传需要后端接口支持。");
+    const filesToUpload = filelist.value;
+
+    if (!filesToUpload || filesToUpload.length === 0) {
+        ElMessage.warning("没有选择任何文件进行上传。");
+        return;
+    }
+
+    const uploadPromises = filesToUpload.map(file => {
+        if (!file.raw) {
+            return Promise.resolve();
+        }
+
+        const formData = new FormData();
+        formData.append('file', file.raw);
+
+        const meta = (file as UploadFileWithMeta).metaData || {};
+        formData.append('meta', JSON.stringify(meta));
+
+        return request({
+            url: '/photo/upload',
+            method: 'POST',
+            data: formData,
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    });
+    
+    Promise.all(uploadPromises)
+        .then(() => {
+            ElMessage.success("所有文件上传成功！");
+            uploadRef.value?.clearFiles();
+        })
+        .catch((error) => {
+            console.error("上传过程中出现错误:", error);
+            ElMessage.error("上传过程中出现错误，请稍后重试。");
+        });
 }
 </script>
 
