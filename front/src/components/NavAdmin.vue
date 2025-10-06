@@ -49,6 +49,7 @@ import {
   Setting,
 } from '@element-plus/icons-vue'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const route = useRoute()
 
 const handleOpen = (key: string, keyPath: string[]) => {
