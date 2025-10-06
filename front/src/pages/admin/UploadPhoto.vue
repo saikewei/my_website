@@ -57,8 +57,8 @@ const handleChange: UploadProps['onChange'] = async (uploadFile) => {
 const handleBeforeUpload: UploadProps['beforeUpload'] = (rawFile: UploadRawFile) => {
     const isJpgOrPng = rawFile.type === 'image/jpeg' || rawFile.type === 'image/png';
     if (!isJpgOrPng) {
-        ElMessage.error('上传图片只能是 JPG 或 PNG 格式!')
-        return false
+        ElMessage.error('上传图片只能是 JPG 或 PNG 格式!');
+        return false;
     }
     return true
 }
@@ -68,8 +68,8 @@ const submitUpload = () => {
   // 这里我们调用 submit 方法来手动触发上传
   // 由于 action="#" 是一个无效地址，实际上传会失败，但会执行 before-upload 钩子
   // 在实际项目中，你需要一个真实的后端接口
-  uploadRef.value!.submit()
-  ElMessage.info("请查看浏览器控制台输出的元数据。实际上传需要后端接口支持。")
+  uploadRef.value!.submit();
+  ElMessage.info("请查看浏览器控制台输出的元数据。实际上传需要后端接口支持。");
 }
 </script>
 
