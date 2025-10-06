@@ -13,6 +13,8 @@ type PhotoUpload struct {
 	ShotAt       *time.Time `json:"shot_at,omitempty"` // 拍摄时间
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
+	Camera       *string    `json:"camera,omitempty"`        // 相机型号 (例如: Canon EOS 5D Mark IV)
+	Lens         *string    `json:"lens,omitempty"`          // 镜头型号 (例如: EF 24-70mm f/2.8L II USM)
 	FocalLength  *string    `json:"focal_length,omitempty"`  // 焦距 (例如: 85mm)
 	Aperture     *string    `json:"aperture,omitempty"`      // 光圈 (例如: f/1.8)
 	ShutterSpeed *string    `json:"shutter_speed,omitempty"` // 快门速度 (例如: 1/1000s)

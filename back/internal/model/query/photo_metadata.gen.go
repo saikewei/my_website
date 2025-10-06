@@ -28,8 +28,8 @@ func newPhotoMetadatum(db *gorm.DB, opts ...gen.DOOption) photoMetadatum {
 	tableName := _photoMetadatum.photoMetadatumDo.TableName()
 	_photoMetadatum.ALL = field.NewAsterisk(tableName)
 	_photoMetadatum.PhotoID = field.NewInt32(tableName, "photo_id")
-	_photoMetadatum.CameraID = field.NewInt32(tableName, "camera_id")
-	_photoMetadatum.LensID = field.NewInt32(tableName, "lens_id")
+	_photoMetadatum.Camera = field.NewString(tableName, "camera")
+	_photoMetadatum.Lens = field.NewString(tableName, "lens")
 	_photoMetadatum.FocalLength = field.NewString(tableName, "focal_length")
 	_photoMetadatum.Aperture = field.NewString(tableName, "aperture")
 	_photoMetadatum.ShutterSpeed = field.NewString(tableName, "shutter_speed")
@@ -49,8 +49,8 @@ type photoMetadatum struct {
 
 	ALL          field.Asterisk
 	PhotoID      field.Int32
-	CameraID     field.Int32   // 相机ID, 关联cameras.id
-	LensID       field.Int32   // 镜头ID, 关联lenses.id
+	Camera       field.String  // 相机
+	Lens         field.String  // 镜头
 	FocalLength  field.String  // 焦距 (例如: 85mm)
 	Aperture     field.String  // 光圈 (例如: f/1.8)
 	ShutterSpeed field.String  // 快门速度 (例如: 1/1000s)
@@ -76,8 +76,8 @@ func (p photoMetadatum) As(alias string) *photoMetadatum {
 func (p *photoMetadatum) updateTableName(table string) *photoMetadatum {
 	p.ALL = field.NewAsterisk(table)
 	p.PhotoID = field.NewInt32(table, "photo_id")
-	p.CameraID = field.NewInt32(table, "camera_id")
-	p.LensID = field.NewInt32(table, "lens_id")
+	p.Camera = field.NewString(table, "camera")
+	p.Lens = field.NewString(table, "lens")
 	p.FocalLength = field.NewString(table, "focal_length")
 	p.Aperture = field.NewString(table, "aperture")
 	p.ShutterSpeed = field.NewString(table, "shutter_speed")
@@ -104,8 +104,8 @@ func (p *photoMetadatum) GetFieldByName(fieldName string) (field.OrderExpr, bool
 func (p *photoMetadatum) fillFieldMap() {
 	p.fieldMap = make(map[string]field.Expr, 11)
 	p.fieldMap["photo_id"] = p.PhotoID
-	p.fieldMap["camera_id"] = p.CameraID
-	p.fieldMap["lens_id"] = p.LensID
+	p.fieldMap["camera"] = p.Camera
+	p.fieldMap["lens"] = p.Lens
 	p.fieldMap["focal_length"] = p.FocalLength
 	p.fieldMap["aperture"] = p.Aperture
 	p.fieldMap["shutter_speed"] = p.ShutterSpeed

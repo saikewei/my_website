@@ -9,8 +9,8 @@ const TableNamePhotoMetadatum = "photo_metadata"
 // PhotoMetadatum mapped from table <photo_metadata>
 type PhotoMetadatum struct {
 	PhotoID      int32    `gorm:"column:photo_id;primaryKey" json:"photo_id"`
-	CameraID     *int32   `gorm:"column:camera_id;comment:相机ID, 关联cameras.id" json:"camera_id"`         // 相机ID, 关联cameras.id
-	LensID       *int32   `gorm:"column:lens_id;comment:镜头ID, 关联lenses.id" json:"lens_id"`              // 镜头ID, 关联lenses.id
+	Camera       *string  `gorm:"column:camera;comment:相机" json:"camera"`                               // 相机
+	Lens         *string  `gorm:"column:lens;comment:镜头" json:"lens"`                                   // 镜头
 	FocalLength  *string  `gorm:"column:focal_length;comment:焦距 (例如: 85mm)" json:"focal_length"`        // 焦距 (例如: 85mm)
 	Aperture     *string  `gorm:"column:aperture;comment:光圈 (例如: f/1.8)" json:"aperture"`               // 光圈 (例如: f/1.8)
 	ShutterSpeed *string  `gorm:"column:shutter_speed;comment:快门速度 (例如: 1/1000s)" json:"shutter_speed"` // 快门速度 (例如: 1/1000s)

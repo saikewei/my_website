@@ -47,6 +47,8 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize in
 
 		metadata := model.PhotoMetadatum{
 			PhotoID:      photo.ID,
+			Camera:       newPhotoMeta.Camera,
+			Lens:         newPhotoMeta.Lens,
 			Aperture:     newPhotoMeta.Aperture,
 			ShutterSpeed: newPhotoMeta.ShutterSpeed,
 			Iso:          newPhotoMeta.Iso,
