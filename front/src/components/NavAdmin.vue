@@ -5,7 +5,7 @@
         active-text-color="#ffd04b"
         background-color="#545c64"
         class="el-menu-vertical-demo"
-        default-active="route.path"
+        :default-active="route.path"
         text-color="#fff"
         @open="handleOpen"
         @close="handleClose"
@@ -18,10 +18,10 @@
           </template>
           <el-menu-item-group title="照片">
             <el-menu-item index="/admin/upload-photo">上传照片</el-menu-item>
+            <el-menu-item index="/admin/edit-photo">编辑照片信息</el-menu-item>
           </el-menu-item-group>
           <el-menu-item-group title="相册">
-            <el-menu-item index="1-2">创建相册</el-menu-item>
-            <el-menu-item index="1-3">相册管理</el-menu-item>
+            <el-menu-item index="/admin/album">相册管理</el-menu-item>
           </el-menu-item-group>
         </el-sub-menu>
         <el-menu-item index="2">
@@ -49,7 +49,6 @@ import {
   Setting,
 } from '@element-plus/icons-vue'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const route = useRoute()
 
 const handleOpen = (key: string, keyPath: string[]) => {
