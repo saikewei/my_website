@@ -20,6 +20,11 @@ func RegisterRouters(router gin.IRouter) {
 		photoGroup.POST("/create-album", createAlbum)
 		photoGroup.POST("/:photo_id/album", addPhotoToAlbum)
 
+		photoGroup.GET("/albums-id", getAllAlbumsID)
+		photoGroup.GET("/:photo_id", getPhotoByID)
+		photoGroup.GET("/:photo_id/thumbnail", getPhotoThumbnailByID)
+		photoGroup.GET("/album/:album_id", getAlbumByID)
+
 		photoGroup.GET("/test", func(c *gin.Context) {
 			photo, err := findPhotoByID(6)
 			log.Println("photo:", *photo, "Error:", err)
@@ -119,4 +124,90 @@ func addPhotoToAlbum(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{"message": "照片添加到相册成功！", "photo_album": pa})
 	}
+}
+
+func getAllAlbumsID(c *gin.Context) {
+	albumsID, err := utils.RunTaskAsyncWithResult(func() ([]int32, error) {
+		return getAllAlbumsIDStore()
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"albums_id": albumsID})
+}
+
+func getAlbumByID(c *gin.Context) {
+	albumID := c.Param("album_id")
+	albumIDInt, err := strconv.ParseInt(albumID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的相册ID"})
+		return
+	}
+
+	album, err := utils.RunTaskAsyncWithResult(func() (*Album, error) {
+		return getAlbumByIDStore(int32(albumIDInt))
+	})
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "相册不存在"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"album": album})
+}
+
+func getPhotoByID(c *gin.Context) {
+	photoID := c.Param("photo_id")
+	photoIDInt, err := strconv.ParseInt(photoID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的照片ID"})
+		return
+	}
+
+	photo, err := utils.RunTaskAsyncWithResult(func() (string, error) {
+		return getPhotoPathByIDStore(int32(photoIDInt))
+	})
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "照片不存在"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.File(photo)
+}
+
+func getPhotoThumbnailByID(c *gin.Context) {
+	photoID := c.Param("photo_id")
+	photoIDInt, err := strconv.ParseInt(photoID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的照片ID"})
+		return
+	}
+
+	// 调用服务层函数来获取或创建缩略图
+	thumbPath, err := utils.RunTaskAsyncWithResult(func() (string, error) {
+		return getOrCreateThumbnailService(int32(photoIDInt))
+	})
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "照片不存在"})
+		} else {
+			// 其他错误，例如文件读写、图片解码等
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	// 将文件发送给客户端
+	c.File(thumbPath)
 }

@@ -163,3 +163,37 @@ func addPhotoToAlbumStore(pa PhotoAlbum) error {
 
 	return nil
 }
+
+func getAllAlbumsIDStore() ([]int32, error) {
+	var albumIDs []int32
+	err := database.DB.Model(&model.Album{}).Order("created_at asc").Pluck("id", &albumIDs).Error
+	if err != nil {
+		return nil, err
+	}
+	return albumIDs, nil
+}
+
+func getAlbumByIDStore(albumID int32) (*Album, error) {
+	var album model.Album
+	err := database.DB.First(&album, albumID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &Album{
+		ID:           album.ID,
+		Title:        album.Title,
+		Description:  album.Description,
+		CoverPhotoID: album.CoverPhotoID,
+		CreatedAt:    album.CreatedAt,
+		UpdatedAt:    album.UpdatedAt,
+	}, nil
+}
+
+func getPhotoPathByIDStore(photoID int32) (string, error) {
+	var photo model.Photo
+	err := database.DB.Select("file_path").First(&photo, photoID).Error
+	if err != nil {
+		return "", err
+	}
+	return photo.FilePath, nil
+}
