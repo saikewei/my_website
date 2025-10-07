@@ -62,6 +62,6 @@ const handleClose = (key: string, keyPath: string[]) => {
 <style scoped>
 .el-menu-vertical-demo {
   width: 200px;
-  min-height: 800px;
+  height: 450px;
 }
 </style>
