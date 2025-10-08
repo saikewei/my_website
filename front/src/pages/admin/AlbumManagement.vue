@@ -1,10 +1,10 @@
 <template>
     <h1>相册管理</h1>
-    <el-button type="primary">添加相册</el-button>
+    <el-button type="primary" @click="onClickAddAlbum">添加相册</el-button>
     <div class="scrollbar-container">
         <el-scrollbar height="70vh">
             <div class="card-container">
-                <el-card style="max-width: 240px" v-for="album in albums" :key="album.id">
+                <el-card style="width: 240px" v-for="album in albums" :key="album.id">
                     <template #header>{{ album.title }}</template>
                     <el-image :src="album.cover_photo_url" style="width: 100%; height: 170px;" fit="cover">
                         <template #error>
@@ -13,7 +13,7 @@
                             </div>
                         </template>
                     </el-image>
-                    <p>{{ album.description }}</p>
+                    <p class="card-description">{{ album.description }}</p>
                     <template #footer>
                         <div class="card-footer">
                             <span>创建时间: {{ album.created_at }}</span>
@@ -25,11 +25,36 @@
             </div>
         </el-scrollbar>
     </div>
+
+    <el-dialog v-model="dialogFormVisible" title="创建相册" width="500">
+    <el-form :model="form" :rules="rules" ref="formRef" label-width="auto">
+      <el-form-item label="相册名称" :label-width="formLabelWidth" prop="name">
+        <el-input v-model="form.name" autocomplete="off" />
+      </el-form-item>
+      <el-form-item label="描述" :label-width="formLabelWidth" prop="description">
+        <el-input
+          type="textarea"
+          v-model="form.description"
+          autocomplete="off"
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button type="primary" @click="onClickSubmit(formRef)">
+          确定
+        </el-button>
+        <el-button @click="dialogFormVisible = false">取消</el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, reactive } from 'vue';
 import request from '@/utils/request';
 import { Picture as IconPicture } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules } from 'element-plus';
+import { ElMessage } from 'element-plus'
 
 type AlbumIdResponse = {
             albums_id: number[];
@@ -44,6 +69,32 @@ type Album = {
     updated_at: string;
     cover_photo_url?: string;
 };
+
+interface CreateForm {
+    name: string;
+    description: string;
+}
+
+const formRef = ref<FormInstance>();
+
+const form = reactive<CreateForm>({
+    name: '',
+    description: '',
+});
+
+const rules = reactive<FormRules<CreateForm>>({
+    name: [
+        { required: true, message: '请输入相册名称', trigger: 'blur' },
+        { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' },
+    ],
+    description: [
+        { max: 200, message: '长度在 0 到 100 个字符', trigger: 'blur' },
+    ],
+});
+
+
+const dialogFormVisible = ref(false)
+const formLabelWidth = '140px'
 
 const albumIds = ref<number[]>([]);
 const albums = ref<Album[]>([]);
@@ -69,6 +120,42 @@ const fetchAlbumIds = async () => {
         console.log('Fetched album details:', albums.value);
     } catch (error) {
         console.error('Failed to fetch album IDs:', error);
+    }
+};
+
+const onClickAddAlbum = () => {
+    dialogFormVisible.value = true;
+};
+
+const onClickSubmit = async (formEl: FormInstance | undefined) => {
+    try {
+        if (!formEl) return;
+        await formEl.validate((valid, fileds) => {
+            if (!valid) {
+                console.log('error submit!', fileds);
+                throw new Error('表单验证失败');
+            }
+        });
+        const response = await request.post('/photo/create-album', {
+            title: form.name,
+            description: form.description === '' ? "无描述" : form.description,
+        });
+        ElMessage({
+            message: '相册创建成功',
+            type: 'success',
+        })
+        console.log('Album created successfully:', response);
+        dialogFormVisible.value = false;
+        
+        form.name = '';
+        form.description = '';
+        fetchAlbumIds();
+    } catch (error) {
+        ElMessage({
+            message: '相册创建失败',
+            type: 'error',
+        })
+        console.error('Failed to create album:', error);
     }
 };
 
@@ -104,5 +191,16 @@ onMounted(() => {
   font-size: 30px;
   height: 170px;
   background: #fff;
+}
+
+.card-description {
+    /* 1. 设置一个固定的高度，确保所有卡片的这部分高度都相同 */
+    height: 63px; /* 这个高度大约可以容纳3行文字，您可以根据需要微调 */
+    line-height: 1.5; /* 设置行高，便于计算 */
+
+    /* 2. 以下是实现多行文本溢出显示省略号的关键样式 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-all; /* 允许在单词内换行 */
 }
 </style>

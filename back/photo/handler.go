@@ -74,6 +74,11 @@ func createAlbum(c *gin.Context) {
 		return
 	}
 
+	if newAlbum.Title == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "相册标题不能为空"})
+		return
+	}
+
 	err := utils.RunTaskAsync(func() error {
 		return createAlbumStore(newAlbum)
 	})
