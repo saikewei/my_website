@@ -9,8 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-
-	"github.com/saikewei/my_website/back/internal/utils"
 )
 
 func RegisterRouters(router gin.IRouter) {
@@ -31,6 +29,8 @@ func RegisterRouters(router gin.IRouter) {
 
 			c.JSON(http.StatusOK, gin.H{"message": "Test endpoint is working!"})
 		})
+
+		photoGroup.PUT("/edit-album", editAlbum)
 	}
 }
 
@@ -48,20 +48,13 @@ func uploadPhoto(c *gin.Context) {
 		return
 	}
 
-	err = utils.RunTaskAsync(func() error {
-		if path, size, err := uploadPhotoFileService(file); err != nil {
-			return err
-		} else if err := uploadPhotoMetaStore(newPhotoMeta, path, size); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
+	if path, size, err := uploadPhotoFileService(file); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	} else if err := uploadPhotoMetaStore(newPhotoMeta, path, size); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	// 返回成功响应
 
 	c.JSON(http.StatusOK, gin.H{"message": "照片上传成功！", "photo": newPhotoMeta})
@@ -79,9 +72,7 @@ func createAlbum(c *gin.Context) {
 		return
 	}
 
-	err := utils.RunTaskAsync(func() error {
-		return createAlbumStore(newAlbum)
-	})
+	err := createAlbumStore(newAlbum)
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -114,9 +105,7 @@ func addPhotoToAlbum(c *gin.Context) {
 	var pa PhotoAlbum
 	pa.PhotoID = int32(photoIDInt)
 	pa.AlbumID = requestBody.AlbumID
-	err = utils.RunTaskAsync(func() error {
-		return addPhotoToAlbumService(pa)
-	})
+	err = addPhotoToAlbumService(pa)
 
 	if err != nil {
 		if errors.Is(err, ErrPhotoAlreadyInAlbum) {
@@ -132,9 +121,8 @@ func addPhotoToAlbum(c *gin.Context) {
 }
 
 func getAllAlbumsID(c *gin.Context) {
-	albumsID, err := utils.RunTaskAsyncWithResult(func() ([]int32, error) {
-		return getAllAlbumsIDStore()
-	})
+	albumsID, err := getAllAlbumsIDStore()
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -150,9 +138,7 @@ func getAlbumByID(c *gin.Context) {
 		return
 	}
 
-	album, err := utils.RunTaskAsyncWithResult(func() (*Album, error) {
-		return getAlbumByIDStore(int32(albumIDInt))
-	})
+	album, err := getAlbumByIDStore(int32(albumIDInt))
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -174,9 +160,7 @@ func getPhotoByID(c *gin.Context) {
 		return
 	}
 
-	photo, err := utils.RunTaskAsyncWithResult(func() (string, error) {
-		return getPhotoPathByIDStore(int32(photoIDInt))
-	})
+	photo, err := getPhotoPathByIDStore(int32(photoIDInt))
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -199,9 +183,7 @@ func getPhotoThumbnailByID(c *gin.Context) {
 	}
 
 	// 调用服务层函数来获取或创建缩略图
-	thumbPath, err := utils.RunTaskAsyncWithResult(func() (string, error) {
-		return getOrCreateThumbnailService(int32(photoIDInt))
-	})
+	thumbPath, err := getOrCreateThumbnailService(int32(photoIDInt))
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -215,4 +197,34 @@ func getPhotoThumbnailByID(c *gin.Context) {
 
 	// 将文件发送给客户端
 	c.File(thumbPath)
+}
+
+func editAlbum(c *gin.Context) {
+	newAlbum := Album{}
+	if err := c.ShouldBindJSON(&newAlbum); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if newAlbum.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "相册ID不能为空"})
+		return
+	}
+	if newAlbum.Title == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "相册标题不能为空"})
+		return
+	}
+
+	err := editAlbumStore(&newAlbum)
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "相册不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "相册编辑成功！", "album": newAlbum})
 }

@@ -1,25 +1,25 @@
 <template>
-    <div class="common-layout">
+  <div class="common-layout">
+    <el-container>
+      <el-header>
+        <div class="header-container">
+          <h1>后台</h1>
+        </div>
+      </el-header>
       <el-container>
-        <el-header>
-          <div class="header-container">
-            <h1>后台</h1>
+        <el-aside width="200px">
+          <div class="aside">
+            <nav-admin />
           </div>
-        </el-header>
-        <el-container>
-          <el-aside width="200px">
-            <div class="aside">
-              <nav-admin />
-            </div>
-          </el-aside>
-          <el-main>
-            <div class="content">
-              <router-view />
-            </div>
-          </el-main>
-        </el-container>
+        </el-aside>
+        <el-main>
+          <div class="content">
+            <router-view />
+          </div>
+        </el-main>
       </el-container>
-    </div>
+    </el-container>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -2,6 +2,7 @@ package photo
 
 import (
 	"path/filepath"
+	"time"
 
 	"github.com/saikewei/my_website/back/internal/database"
 	"github.com/saikewei/my_website/back/internal/model"
@@ -196,4 +197,14 @@ func getPhotoPathByIDStore(photoID int32) (string, error) {
 		return "", err
 	}
 	return photo.FilePath, nil
+}
+
+func editAlbumStore(album *Album) error {
+	modelAlbum := model.Album{
+		Title:       album.Title,
+		Description: album.Description,
+		UpdatedAt:   time.Now(),
+	}
+
+	return database.DB.Model(&model.Album{}).Where("id = ?", album.ID).Updates(&modelAlbum).Error
 }
