@@ -19,35 +19,35 @@
                             <span>创建时间: {{ album.created_at }}</span>
                         </div>
                     </template>
-                    <el-button type="text" size="small">编辑</el-button>
+                    <el-button type="text" size="small" @click="onClickEditAlbum(album.id)">编辑</el-button>
                     <el-button type="text" size="small" style="color: red;">删除</el-button>
                 </el-card>
             </div>
         </el-scrollbar>
     </div>
 
-    <el-dialog v-model="dialogFormVisible" title="创建相册" width="500">
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="auto">
-      <el-form-item label="相册名称" :label-width="formLabelWidth" prop="name">
-        <el-input v-model="form.name" autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="描述" :label-width="formLabelWidth" prop="description">
-        <el-input
-          type="textarea"
-          v-model="form.description"
-          autocomplete="off"
-        />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button type="primary" @click="onClickSubmit(formRef)">
-          确定
-        </el-button>
-        <el-button @click="dialogFormVisible = false">取消</el-button>
-      </div>
-    </template>
-  </el-dialog>
+    <el-dialog v-model="dialogFormVisible" :title="dialogFormTitle" width="500">
+        <el-form :model="form" :rules="rules" ref="formRef" label-width="auto">
+        <el-form-item label="相册名称" :label-width="formLabelWidth" prop="name">
+            <el-input v-model="form.name" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="描述" :label-width="formLabelWidth" prop="description">
+            <el-input
+            type="textarea"
+            v-model="form.description"
+            autocomplete="off"
+            />
+        </el-form-item>
+        </el-form>
+        <template #footer>
+        <div class="dialog-footer">
+            <el-button type="primary" @click="onClickSubmit(formRef)">
+            确定
+            </el-button>
+            <el-button @click="dialogFormVisible = false">取消</el-button>
+        </div>
+        </template>
+    </el-dialog>
 </template>
 <script setup lang="ts">
 import { onMounted, ref, reactive } from 'vue';
@@ -82,6 +82,8 @@ const form = reactive<CreateForm>({
     description: '',
 });
 
+const currentAlbumId = ref<number | null>(null);
+
 const rules = reactive<FormRules<CreateForm>>({
     name: [
         { required: true, message: '请输入相册名称', trigger: 'blur' },
@@ -94,13 +96,13 @@ const rules = reactive<FormRules<CreateForm>>({
 
 
 const dialogFormVisible = ref(false)
+const dialogFormTitle = ref('创建相册')
 const formLabelWidth = '140px'
 
 const albumIds = ref<number[]>([]);
 const albums = ref<Album[]>([]);
 const fetchAlbumIds = async () => {
     try {
-        
         const response = await request.get('/photo/albums-id') as AlbumIdResponse;
         albumIds.value = response.albums_id;
         console.log('Fetched album IDs:', albumIds.value);
@@ -124,6 +126,7 @@ const fetchAlbumIds = async () => {
 };
 
 const onClickAddAlbum = () => {
+    dialogFormTitle.value = '创建相册';
     dialogFormVisible.value = true;
 };
 
@@ -136,27 +139,58 @@ const onClickSubmit = async (formEl: FormInstance | undefined) => {
                 throw new Error('表单验证失败');
             }
         });
-        const response = await request.post('/photo/create-album', {
-            title: form.name,
-            description: form.description === '' ? "无描述" : form.description,
-        });
-        ElMessage({
-            message: '相册创建成功',
-            type: 'success',
-        })
-        console.log('Album created successfully:', response);
+
+        if (dialogFormTitle.value === '创建相册') {
+            const response = await request.post('/photo/create-album', {
+                title: form.name,
+                description: form.description === '' ? "无描述" : form.description,
+            });
+            ElMessage({
+                message: '相册创建成功',
+                type: 'success',
+            })
+            console.log('Album created successfully:', response);
+        }
+        else if (dialogFormTitle.value === '编辑相册') {
+            const response = await request.put('/photo/edit-album', {
+                id: currentAlbumId.value,
+                title: form.name,
+                description: form.description === '' ? "无描述" : form.description,
+            });
+            ElMessage({
+                message: '相册编辑成功',
+                type: 'success',
+            })
+            console.log('Album edited successfully:', response);
+            currentAlbumId.value = null;
+        }
         dialogFormVisible.value = false;
         
         form.name = '';
         form.description = '';
         fetchAlbumIds();
     } catch (error) {
+        dialogFormVisible.value = false;
+        currentAlbumId.value = null;
+        
+        form.name = '';
+        form.description = '';
         ElMessage({
             message: '相册创建失败',
             type: 'error',
         })
         console.error('Failed to create album:', error);
     }
+};
+
+const onClickEditAlbum = (albumId: number) => {
+    dialogFormTitle.value = '编辑相册';
+    dialogFormVisible.value = true;
+    currentAlbumId.value = albumId;
+    console.log('Edit album with ID:', albumId);
+
+    form.name = albums.value.find(album => album.id === albumId)?.title || '';
+    form.description = albums.value.find(album => album.id === albumId)?.description || '';
 };
 
 onMounted(() => {
