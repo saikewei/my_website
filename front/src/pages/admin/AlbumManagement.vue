@@ -20,7 +20,7 @@
                         </div>
                     </template>
                     <el-button type="text" size="small" @click="onClickEditAlbum(album.id)">编辑</el-button>
-                    <el-button type="text" size="small" style="color: red;">删除</el-button>
+                    <el-button type="text" size="small" style="color: red;" @click="onClickDeleteAlbum(album.id)">删除</el-button>
                 </el-card>
             </div>
         </el-scrollbar>
@@ -54,7 +54,7 @@ import { onMounted, ref, reactive } from 'vue';
 import request from '@/utils/request';
 import { Picture as IconPicture } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus';
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 type AlbumIdResponse = {
             albums_id: number[];
@@ -191,6 +191,40 @@ const onClickEditAlbum = (albumId: number) => {
 
     form.name = albums.value.find(album => album.id === albumId)?.title || '';
     form.description = albums.value.find(album => album.id === albumId)?.description || '';
+};
+
+const onClickDeleteAlbum = (albumId: number) => {
+    ElMessageBox.confirm('确定要删除该相册吗？此操作不可逆！', '警告', {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        
+        type: 'warning',
+    }).then(() => {
+        deleteAlbum(albumId);
+    }).catch(() => {
+        ElMessage({
+            type: 'info',
+            message: '已取消删除'
+        });
+    });
+}
+
+const deleteAlbum = async (albumId: number) => {
+    try {
+        const response = await request.delete(`/photo/album/${albumId}`);
+        ElMessage({
+            message: '相册删除成功',
+            type: 'success',
+        })
+        console.log('Album deleted successfully:', response);
+        fetchAlbumIds();
+    } catch (error) {
+        ElMessage({
+            message: '相册删除失败',
+            type: 'error',
+        })
+        console.error('Failed to delete album:', error);
+    }
 };
 
 onMounted(() => {

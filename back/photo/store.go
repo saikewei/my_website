@@ -208,3 +208,14 @@ func editAlbumStore(album *Album) error {
 
 	return database.DB.Model(&model.Album{}).Where("id = ?", album.ID).Updates(&modelAlbum).Error
 }
+
+func deleteAlbumByIDStore(albumID int32) error {
+	result := database.DB.Model(&model.Album{}).Where("id = ?", albumID).Delete(&model.Album{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}

@@ -31,6 +31,8 @@ func RegisterRouters(router gin.IRouter) {
 		})
 
 		photoGroup.PUT("/edit-album", editAlbum)
+
+		photoGroup.DELETE("/album/:album_id", deleteAlbumByID)
 	}
 }
 
@@ -227,4 +229,26 @@ func editAlbum(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "相册编辑成功！", "album": newAlbum})
+}
+
+func deleteAlbumByID(c *gin.Context) {
+	albumID := c.Param("album_id")
+	albumIDInt, err := strconv.ParseInt(albumID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的相册ID"})
+		return
+	}
+
+	err = deleteAlbumByIDStore(int32(albumIDInt))
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "相册不存在"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "相册删除成功！"})
 }
