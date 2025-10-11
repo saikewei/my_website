@@ -53,10 +53,20 @@ func uploadPhoto(c *gin.Context) {
 	if path, size, err := uploadPhotoFileService(file); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	} else if err := uploadPhotoMetaStore(newPhotoMeta, path, size); err != nil {
+	} else if newPhotoID, err := uploadPhotoMetaStore(newPhotoMeta, path, size); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	} else {
+		newPhotoMeta.ID = newPhotoID
 	}
+
+	go func() {
+		if _, err := getOrCreateThumbnailService(newPhotoMeta.ID); err != nil {
+			log.Println("生成缩略图失败:", err)
+		} else {
+			log.Println("缩略图生成成功")
+		}
+	}()
 	// 返回成功响应
 
 	c.JSON(http.StatusOK, gin.H{"message": "照片上传成功！", "photo": newPhotoMeta})

@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize int64) error {
+func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize int64) (int32, error) {
 	var oldTagsID []int32
 	var newTags []*model.Tag
 
@@ -21,15 +21,16 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize in
 				if err == gorm.ErrRecordNotFound {
 					newTags = append(newTags, &model.Tag{Name: tag})
 				} else {
-					return err
+					return 0, err
 				}
 			} else {
 				oldTagsID = append(oldTagsID, tagID)
 			}
 		}
 	}
+	var newPhotoID int32
 
-	return database.DB.Transaction(func(tx *gorm.DB) error {
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		txq := query.Use(tx)
 
 		photo := model.Photo{
@@ -45,6 +46,8 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize in
 		if err := txq.Photo.Create(&photo); err != nil {
 			return err
 		}
+
+		newPhotoID = photo.ID
 
 		metadata := model.PhotoMetadatum{
 			PhotoID:      photo.ID,
@@ -89,6 +92,12 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize in
 
 		return nil
 	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return newPhotoID, nil
 }
 
 func findTagIDByName(tagName string) (int32, error) {

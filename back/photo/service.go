@@ -98,7 +98,7 @@ func getOrCreateThumbnailService(photoID int32) (string, error) {
 		return "", err
 	}
 
-	thumb := resize.Resize(400, 0, img, resize.Lanczos3)
+	thumb := resize.Resize(1000, 0, img, resize.Lanczos3)
 
 	outFile, err := os.Create(thumbPath)
 	if err != nil {
