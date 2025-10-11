@@ -22,10 +22,11 @@ func RegisterRouters(router gin.IRouter) {
 		photoGroup.GET("/:photo_id", getPhotoByID)
 		photoGroup.GET("/:photo_id/thumbnail", getPhotoThumbnailByID)
 		photoGroup.GET("/album/:album_id", getAlbumByID)
+		photoGroup.GET("/page", getPhotosByPage)
 
 		photoGroup.GET("/test", func(c *gin.Context) {
-			photo, err := findPhotoByID(6)
-			log.Println("photo:", *photo, "Error:", err)
+			_, total, _ := getAllPhotosMetaByPageStore(1, 5)
+			log.Printf("Total photos: %d", total)
 
 			c.JSON(http.StatusOK, gin.H{"message": "Test endpoint is working!"})
 		})
@@ -61,7 +62,7 @@ func uploadPhoto(c *gin.Context) {
 	}
 
 	go func() {
-		if _, err := getOrCreateThumbnailService(newPhotoMeta.ID); err != nil {
+		if _, err := getOrCreateThumbnailService(newPhotoMeta.ID, ""); err != nil {
 			log.Println("生成缩略图失败:", err)
 		} else {
 			log.Println("缩略图生成成功")
@@ -195,7 +196,7 @@ func getPhotoThumbnailByID(c *gin.Context) {
 	}
 
 	// 调用服务层函数来获取或创建缩略图
-	thumbPath, err := getOrCreateThumbnailService(int32(photoIDInt))
+	thumbPath, err := getOrCreateThumbnailService(int32(photoIDInt), "")
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -261,4 +262,33 @@ func deleteAlbumByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "相册删除成功！"})
+}
+
+func getPhotosByPage(c *gin.Context) {
+	pageNumStr := c.DefaultQuery("page_num", "1")
+	pageSizeStr := c.DefaultQuery("page_size", "10")
+
+	pageNum, err := strconv.Atoi(pageNumStr)
+	if err != nil || pageNum < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的页码"})
+		return
+	}
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 5 || pageSize > 15 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的每页大小，必须在5到15之间"})
+		return
+	}
+
+	photosWithThumbnails, total, err := getAllPhotosByPageService(int(pageNum), int(pageSize))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "没有找到照片"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"photos": photosWithThumbnails, "total": total})
 }

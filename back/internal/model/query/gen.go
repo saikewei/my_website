@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	Q              = new(Query)
-	Album          *album
-	Photo          *photo
-	PhotoMetadatum *photoMetadatum
-	PhotoTag       *photoTag
-	Tag            *tag
+	Q                 = new(Query)
+	Album             *album
+	Photo             *photo
+	PhotoMetadatum    *photoMetadatum
+	PhotoTag          *photoTag
+	Tag               *tag
+	VPhotosWithDetail *vPhotosWithDetail
 )
 
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
@@ -31,39 +32,43 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	PhotoMetadatum = &Q.PhotoMetadatum
 	PhotoTag = &Q.PhotoTag
 	Tag = &Q.Tag
+	VPhotosWithDetail = &Q.VPhotosWithDetail
 }
 
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
-		db:             db,
-		Album:          newAlbum(db, opts...),
-		Photo:          newPhoto(db, opts...),
-		PhotoMetadatum: newPhotoMetadatum(db, opts...),
-		PhotoTag:       newPhotoTag(db, opts...),
-		Tag:            newTag(db, opts...),
+		db:                db,
+		Album:             newAlbum(db, opts...),
+		Photo:             newPhoto(db, opts...),
+		PhotoMetadatum:    newPhotoMetadatum(db, opts...),
+		PhotoTag:          newPhotoTag(db, opts...),
+		Tag:               newTag(db, opts...),
+		VPhotosWithDetail: newVPhotosWithDetail(db, opts...),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	Album          album
-	Photo          photo
-	PhotoMetadatum photoMetadatum
-	PhotoTag       photoTag
-	Tag            tag
+	Album             album
+	Photo             photo
+	PhotoMetadatum    photoMetadatum
+	PhotoTag          photoTag
+	Tag               tag
+	VPhotosWithDetail vPhotosWithDetail
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:             db,
-		Album:          q.Album.clone(db),
-		Photo:          q.Photo.clone(db),
-		PhotoMetadatum: q.PhotoMetadatum.clone(db),
-		PhotoTag:       q.PhotoTag.clone(db),
-		Tag:            q.Tag.clone(db),
+		db:                db,
+		Album:             q.Album.clone(db),
+		Photo:             q.Photo.clone(db),
+		PhotoMetadatum:    q.PhotoMetadatum.clone(db),
+		PhotoTag:          q.PhotoTag.clone(db),
+		Tag:               q.Tag.clone(db),
+		VPhotosWithDetail: q.VPhotosWithDetail.clone(db),
 	}
 }
 
@@ -77,30 +82,33 @@ func (q *Query) WriteDB() *Query {
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
-		db:             db,
-		Album:          q.Album.replaceDB(db),
-		Photo:          q.Photo.replaceDB(db),
-		PhotoMetadatum: q.PhotoMetadatum.replaceDB(db),
-		PhotoTag:       q.PhotoTag.replaceDB(db),
-		Tag:            q.Tag.replaceDB(db),
+		db:                db,
+		Album:             q.Album.replaceDB(db),
+		Photo:             q.Photo.replaceDB(db),
+		PhotoMetadatum:    q.PhotoMetadatum.replaceDB(db),
+		PhotoTag:          q.PhotoTag.replaceDB(db),
+		Tag:               q.Tag.replaceDB(db),
+		VPhotosWithDetail: q.VPhotosWithDetail.replaceDB(db),
 	}
 }
 
 type queryCtx struct {
-	Album          *albumDo
-	Photo          *photoDo
-	PhotoMetadatum *photoMetadatumDo
-	PhotoTag       *photoTagDo
-	Tag            *tagDo
+	Album             *albumDo
+	Photo             *photoDo
+	PhotoMetadatum    *photoMetadatumDo
+	PhotoTag          *photoTagDo
+	Tag               *tagDo
+	VPhotosWithDetail *vPhotosWithDetailDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		Album:          q.Album.WithContext(ctx),
-		Photo:          q.Photo.WithContext(ctx),
-		PhotoMetadatum: q.PhotoMetadatum.WithContext(ctx),
-		PhotoTag:       q.PhotoTag.WithContext(ctx),
-		Tag:            q.Tag.WithContext(ctx),
+		Album:             q.Album.WithContext(ctx),
+		Photo:             q.Photo.WithContext(ctx),
+		PhotoMetadatum:    q.PhotoMetadatum.WithContext(ctx),
+		PhotoTag:          q.PhotoTag.WithContext(ctx),
+		Tag:               q.Tag.WithContext(ctx),
+		VPhotosWithDetail: q.VPhotosWithDetail.WithContext(ctx),
 	}
 }
 

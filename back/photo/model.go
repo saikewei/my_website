@@ -1,6 +1,10 @@
 package photo
 
-import "time"
+import (
+	"time"
+
+	"github.com/saikewei/my_website/back/internal/model"
+)
 
 type PhotoUpload struct {
 	ID           int32      `json:"id"`
@@ -38,4 +42,9 @@ type Album struct {
 type PhotoAlbum struct {
 	PhotoID int32 `json:"photo_id"`
 	AlbumID int32 `json:"album_id"`
+}
+
+type PhotoAllDataWithThumbnail struct {
+	model.VPhotosWithDetail
+	ThumbnailBase64 string `json:"thumbnail_base64"` // 缩略图的Base64编码
 }

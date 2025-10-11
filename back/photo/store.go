@@ -228,3 +228,36 @@ func deleteAlbumByIDStore(albumID int32) error {
 	}
 	return nil
 }
+
+func getAllPhotosMetaByPageStore(page, pageSize int) ([]*model.VPhotosWithDetail, int64, error) {
+	var photos []*model.VPhotosWithDetail
+	var total int64
+
+	err := database.DB.Model(&model.Photo{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	if total == 0 {
+		return nil, 0, gorm.ErrRecordNotFound
+	} else if (page-1)*pageSize >= int(total) {
+		return nil, total, gorm.ErrRecordNotFound
+	}
+
+	err = database.DB.Model(&model.VPhotosWithDetail{}).Order("created_at desc").
+		Offset((page - 1) * pageSize).Limit(pageSize).Find(&photos).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return photos, total, nil
+}
+
+func getAllPhotoPageNumStore(pageSize int) (int, error) {
+	var total int64
+	err := database.DB.Model(&model.Photo{}).Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return int((total + int64(pageSize) - 1) / int64(pageSize)), nil
+}
