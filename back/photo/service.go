@@ -160,6 +160,7 @@ func getAllPhotosByPageService(page, pageSize int) ([]PhotoAllDataWithThumbnail,
 				resultsChan <- result{index: index, err: err}
 				return
 			}
+			p.FilePath = "" // 清空原始路径，避免泄露服务器文件结构
 
 			resultsChan <- result{
 				index: index,

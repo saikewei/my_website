@@ -18,7 +18,7 @@
           </template>
           <el-menu-item-group title="照片">
             <el-menu-item index="/admin/upload-photo">上传照片</el-menu-item>
-            <el-menu-item index="/admin/edit-photo">编辑照片信息</el-menu-item>
+            <el-menu-item index="/admin/photo-management">编辑照片信息</el-menu-item>
           </el-menu-item-group>
           <el-menu-item-group title="相册">
             <el-menu-item index="/admin/album">相册管理</el-menu-item>

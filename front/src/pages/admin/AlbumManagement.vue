@@ -50,7 +50,7 @@
     </el-dialog>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, reactive } from 'vue';
+import { onBeforeMount, ref, reactive } from 'vue';
 import request from '@/utils/request';
 import { Picture as IconPicture } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus';
@@ -227,7 +227,7 @@ const deleteAlbum = async (albumId: number) => {
     }
 };
 
-onMounted(() => {
+onBeforeMount(() => {
     fetchAlbumIds();
 });
 

@@ -265,8 +265,8 @@ func deleteAlbumByID(c *gin.Context) {
 }
 
 func getPhotosByPage(c *gin.Context) {
-	pageNumStr := c.DefaultQuery("page_num", "1")
-	pageSizeStr := c.DefaultQuery("page_size", "10")
+	pageNumStr := c.DefaultQuery("page-num", "1")
+	pageSizeStr := c.DefaultQuery("page-size", "10")
 
 	pageNum, err := strconv.Atoi(pageNumStr)
 	if err != nil || pageNum < 1 {
@@ -275,8 +275,8 @@ func getPhotosByPage(c *gin.Context) {
 	}
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize < 5 || pageSize > 15 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的每页大小，必须在5到15之间"})
+	if err != nil || pageSize < 5 || pageSize > 40 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的每页大小，必须在5到40之间"})
 		return
 	}
 
