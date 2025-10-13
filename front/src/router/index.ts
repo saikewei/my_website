@@ -15,6 +15,7 @@ const router = createRouter({
     {
       path: '/admin',
       component: AdminPage,
+      redirect: '/admin/upload-photo',
       children: [
         {
           path: 'upload-photo',
