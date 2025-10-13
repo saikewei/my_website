@@ -23,11 +23,11 @@
         </div>
     </el-scrollbar>
     <el-pagination 
-    layout="prev, pager, next" 
-    v-model:current-page="currentPage"
-    :total="total" 
-    :page-size="pageSize"
-    @current-change="handleOnPageChange"
+        layout="prev, pager, next" 
+        v-model:current-page="currentPage"
+        :total="total" 
+        :page-size="pageSize"
+        @current-change="handleOnPageChange"
     />
 </template>
 <script setup lang="ts">

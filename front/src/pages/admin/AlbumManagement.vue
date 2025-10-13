@@ -152,7 +152,7 @@ const onClickSubmit = async (formEl: FormInstance | undefined) => {
             console.log('Album created successfully:', response);
         }
         else if (dialogFormTitle.value === '编辑相册') {
-            const response = await request.put('/photo/edit-album', {
+            const response = await request.put('/photo/edit/album', {
                 id: currentAlbumId.value,
                 title: form.name,
                 description: form.description === '' ? "无描述" : form.description,

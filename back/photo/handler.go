@@ -31,7 +31,7 @@ func RegisterRouters(router gin.IRouter) {
 			c.JSON(http.StatusOK, gin.H{"message": "Test endpoint is working!"})
 		})
 
-		photoGroup.PUT("/edit-album", editAlbum)
+		photoGroup.PUT("/edit/album", editAlbum)
 
 		photoGroup.DELETE("/album/:album_id", deleteAlbumByID)
 	}
