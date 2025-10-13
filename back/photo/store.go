@@ -42,6 +42,8 @@ func uploadPhotoMetaStore(newPhotoMeta PhotoUpload, filePath string, fileSize in
 			Height:     newPhotoMeta.Height,
 			IsFeatured: newPhotoMeta.IsFeatured,
 			ShotAt:     newPhotoMeta.ShotAt,
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 		if err := txq.Photo.Create(&photo); err != nil {
 			return err
@@ -260,4 +262,91 @@ func getAllPhotoPageNumStore(pageSize int) (int, error) {
 	}
 
 	return int((total + int64(pageSize) - 1) / int64(pageSize)), nil
+}
+
+func editPhotoByIDStore(newData PhotoEdit) error {
+	newPhoto := model.Photo{
+		Title:       newData.Title,
+		Description: newData.Description,
+		IsFeatured:  newData.IsFeatured,
+		AlbumID:     newData.AlbumID,
+		UpdatedAt:   time.Now(),
+	}
+
+	var oldTagsID []int32
+	var tagsToAdd []*model.Tag
+
+	newTags := newData.Tags
+
+	if len(newTags) > 0 {
+		for _, tag := range newTags {
+			tagID, err := findTagIDByName(tag)
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					tagsToAdd = append(tagsToAdd, &model.Tag{Name: tag})
+				} else {
+					return err
+				}
+			} else {
+				oldTagsID = append(oldTagsID, tagID)
+			}
+		}
+	}
+
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		txq := query.Use(tx)
+
+		txq.Photo.Where(txq.Photo.ID.Eq(newData.ID)).Updates(newPhoto)
+		if newData.AlbumID != nil {
+			exist, err := checkAlbumExists(*newData.AlbumID)
+			if err != nil {
+				return err
+			} else if !exist {
+				return gorm.ErrRecordNotFound
+			}
+			txq.Album.Where(txq.Album.ID.Eq(*newData.AlbumID)).Updates(map[string]interface{}{"updated_at": time.Now()})
+		}
+
+		if len(tagsToAdd) > 0 {
+			if err := txq.Tag.CreateInBatches(tagsToAdd, 100); err != nil {
+				return err
+			}
+
+			for _, tag := range tagsToAdd {
+				oldTagsID = append(oldTagsID, tag.ID)
+			}
+		}
+
+		if _, err := txq.PhotoTag.Where(txq.PhotoTag.PhotoID.Eq(newData.ID)).Delete(); err != nil {
+			return err
+		}
+
+		if len(oldTagsID) > 0 {
+			var photoTags []*model.PhotoTag
+			for _, tagID := range oldTagsID {
+				photoTags = append(photoTags, &model.PhotoTag{
+					PhotoID: newData.ID,
+					TagID:   tagID,
+				})
+			}
+			if err := txq.PhotoTag.CreateInBatches(photoTags, 100); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func deletePhotoByIDStore(photoID int32) error {
+	result := database.DB.Model(&model.Photo{}).Where("id = ?", photoID).Delete(&model.Photo{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

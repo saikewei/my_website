@@ -210,3 +210,17 @@ func imageToBase64(path string) (string, error) {
 
 	return fmt.Sprintf("data:%s;base64,%s", mimeType, encodedString), nil
 }
+
+func editPhotoService(newPhoto PhotoEdit) error {
+	if exist, err := checkPhotoExists(newPhoto.ID); err != nil {
+		return err
+	} else if !exist {
+		return gorm.ErrRecordNotFound
+	}
+
+	if err := editPhotoByIDStore(newPhoto); err != nil {
+		return err
+	}
+
+	return nil
+}

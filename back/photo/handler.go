@@ -32,8 +32,10 @@ func RegisterRouters(router gin.IRouter) {
 		})
 
 		photoGroup.PUT("/edit/album", editAlbum)
+		photoGroup.PUT("/edit/photo", editPhoto)
 
-		photoGroup.DELETE("/album/:album_id", deleteAlbumByID)
+		photoGroup.DELETE("/album/:album_id", deleteAlbum)
+		photoGroup.DELETE("/:photo_id", deletePhoto)
 	}
 }
 
@@ -242,7 +244,7 @@ func editAlbum(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "相册编辑成功！", "album": newAlbum})
 }
 
-func deleteAlbumByID(c *gin.Context) {
+func deleteAlbum(c *gin.Context) {
 	albumID := c.Param("album_id")
 	albumIDInt, err := strconv.ParseInt(albumID, 10, 32)
 	if err != nil {
@@ -291,4 +293,52 @@ func getPhotosByPage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"photos": photosWithThumbnails, "total": total})
+}
+
+func editPhoto(c *gin.Context) {
+	newPhoto := PhotoEdit{}
+	if err := c.ShouldBindJSON(&newPhoto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if newPhoto.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "照片ID不能为空"})
+		return
+	}
+
+	err := editPhotoService(newPhoto)
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "照片不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "照片编辑成功！", "photo": newPhoto})
+}
+
+func deletePhoto(c *gin.Context) {
+	photoID := c.Param("photo_id")
+	photoIDInt, err := strconv.ParseInt(photoID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的照片ID"})
+		return
+	}
+
+	err = deletePhotoByIDStore(int32(photoIDInt))
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "照片不存在"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "照片删除成功！"})
 }

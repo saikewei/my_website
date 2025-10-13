@@ -48,3 +48,12 @@ type PhotoAllDataWithThumbnail struct {
 	model.VPhotosWithDetail
 	ThumbnailBase64 string `json:"thumbnail_base64"` // 缩略图的Base64编码
 }
+
+type PhotoEdit struct {
+	ID          int32    `json:"id"`
+	Title       string   `json:"title"`       // 照片标题
+	IsFeatured  bool     `json:"is_featured"` // 是否为精选照片
+	Tags        []string `json:"tags"`        // 照片标签
+	Description *string  `json:"description,omitempty"`
+	AlbumID     *int32   `json:"album_id,omitempty"` // 照片所属相册ID, 关联albums表
+}
