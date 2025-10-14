@@ -27,6 +27,11 @@ const router = createRouter({
         },
         {
           path: 'photo-management',
+          redirect: '/admin/photo-management/1',
+        },
+        {
+          path: 'photo-management/:page',
+          name: 'PhotoManagement',
           component: PhotoManagement,
         }
       ]

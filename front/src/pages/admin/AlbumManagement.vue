@@ -112,7 +112,7 @@ const fetchAlbumIds = async () => {
             detailResponse.album.created_at = new Date(detailResponse.album.created_at).toLocaleDateString();
             detailResponse.album.updated_at = new Date(detailResponse.album.updated_at).toLocaleDateString();
             detailResponse.album.cover_photo_url = detailResponse.album.cover_photo_id
-                ? `http://localhost:9000/api/photo/${detailResponse.album.cover_photo_id}/thumbnail`
+                ? `${import.meta.env.VITE_API_BASE_URL}/photo/${detailResponse.album.cover_photo_id}/thumbnail`
                 : undefined;
             return detailResponse.album;
         })

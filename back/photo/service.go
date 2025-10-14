@@ -76,7 +76,7 @@ func addPhotoToAlbumService(pa PhotoAlbum) error {
 	return nil
 }
 
-func getOrCreateThumbnailService(photoID int32, originalPath string) (string, error) {
+func getOrCreateThumbnailService(photoID int32, originalPath string, newSize uint) (string, error) {
 	if originalPath == "" {
 		var err error
 		originalPath, err = getPhotoPathByIDStore(photoID)
@@ -85,9 +85,20 @@ func getOrCreateThumbnailService(photoID int32, originalPath string) (string, er
 		}
 	}
 
+	if newSize == 0 {
+		newSize = 400
+	}
+
 	ext := filepath.Ext(originalPath)
 	base := strings.TrimSuffix(filepath.Base(originalPath), ext)
-	thumbFileName := base + "_thumb.jpg"
+
+	var thumbFileName string
+	if newSize != 400 {
+		thumbFileName = fmt.Sprintf("%s_thumb_%d.jpg", base, newSize)
+	} else {
+		thumbFileName = fmt.Sprintf("%s_thumb.jpg", base)
+	}
+
 	thumbPath := filepath.Join(filepath.Dir(originalPath), thumbFileName)
 
 	if _, err := os.Stat(thumbPath); err == nil {
@@ -107,7 +118,7 @@ func getOrCreateThumbnailService(photoID int32, originalPath string) (string, er
 		return "", err
 	}
 
-	thumb := resize.Resize(400, 0, img, resize.Lanczos3)
+	thumb := resize.Resize(newSize, 0, img, resize.Lanczos3)
 
 	outFile, err := os.Create(thumbPath)
 	if err != nil {
@@ -150,7 +161,7 @@ func getAllPhotosByPageService(page, pageSize int) ([]PhotoAllDataWithThumbnail,
 		go func(index int, p *model.VPhotosWithDetail) {
 			defer wg.Done()
 
-			thumbPath, err := getOrCreateThumbnailService(photo.ID, p.FilePath)
+			thumbPath, err := getOrCreateThumbnailService(photo.ID, p.FilePath, 0)
 			if err != nil {
 				return
 			}

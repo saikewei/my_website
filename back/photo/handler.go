@@ -19,6 +19,7 @@ func RegisterRouters(router gin.IRouter) {
 		photoGroup.POST("/:photo_id/album", addPhotoToAlbum)
 
 		photoGroup.GET("/albums-id", getAllAlbumsID)
+		photoGroup.GET("/album/details", getAllAlbumsDetails)
 		photoGroup.GET("/:photo_id", getPhotoByID)
 		photoGroup.GET("/:photo_id/thumbnail", getPhotoThumbnailByID)
 		photoGroup.GET("/album/:album_id", getAlbumByID)
@@ -64,7 +65,7 @@ func uploadPhoto(c *gin.Context) {
 	}
 
 	go func() {
-		if _, err := getOrCreateThumbnailService(newPhotoMeta.ID, ""); err != nil {
+		if _, err := getOrCreateThumbnailService(newPhotoMeta.ID, "", 0); err != nil {
 			log.Println("生成缩略图失败:", err)
 		} else {
 			log.Println("缩略图生成成功")
@@ -167,6 +168,16 @@ func getAlbumByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"album": album})
 }
 
+func getAllAlbumsDetails(c *gin.Context) {
+	albums, err := getAllAlbumsDetailsStore()
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"albums": albums})
+}
+
 func getPhotoByID(c *gin.Context) {
 	photoID := c.Param("photo_id")
 	photoIDInt, err := strconv.ParseInt(photoID, 10, 32)
@@ -190,6 +201,13 @@ func getPhotoByID(c *gin.Context) {
 }
 
 func getPhotoThumbnailByID(c *gin.Context) {
+	thumbnailSize := c.DefaultQuery("size", "400")
+	sizeInt, err := strconv.ParseUint(thumbnailSize, 10, 32)
+	if err != nil || sizeInt < 100 || sizeInt > 2000 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的缩略图尺寸，必须在100到2000之间"})
+		return
+	}
+
 	photoID := c.Param("photo_id")
 	photoIDInt, err := strconv.ParseInt(photoID, 10, 32)
 	if err != nil {
@@ -198,7 +216,7 @@ func getPhotoThumbnailByID(c *gin.Context) {
 	}
 
 	// 调用服务层函数来获取或创建缩略图
-	thumbPath, err := getOrCreateThumbnailService(int32(photoIDInt), "")
+	thumbPath, err := getOrCreateThumbnailService(int32(photoIDInt), "", uint(sizeInt))
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

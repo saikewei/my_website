@@ -5,7 +5,7 @@
         active-text-color="#ffd04b"
         background-color="#545c64"
         class="el-menu-vertical-demo"
-        :default-active="route.path"
+        :default-active="activeMenu"
         text-color="#fff"
         @open="handleOpen"
         @close="handleClose"
@@ -49,7 +49,20 @@ import {
   Setting,
 } from '@element-plus/icons-vue'
 
+import { computed } from 'vue'
+
 const route = useRoute()
+
+const activeMenu = computed(() => {
+  const { path } = route;
+  // 如果当前路径以 /admin/photo-management 开头，
+  // 就返回 /admin/photo-management 作为激活的 index
+  if (path.startsWith('/admin/photo-management')) {
+    return '/admin/photo-management';
+  }
+  // 否则，直接返回当前路径
+  return path;
+});
 
 const handleOpen = (key: string, keyPath: string[]) => {
   console.log(key, keyPath)

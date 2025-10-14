@@ -185,6 +185,28 @@ func getAllAlbumsIDStore() ([]int32, error) {
 	return albumIDs, nil
 }
 
+func getAllAlbumsDetailsStore() ([]*Album, error) {
+	var albums []model.Album
+	err := database.DB.Model(&model.Album{}).Order("created_at asc").Find(&albums).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*Album
+	for _, album := range albums {
+		result = append(result, &Album{
+			ID:           album.ID,
+			Title:        album.Title,
+			Description:  album.Description,
+			CoverPhotoID: album.CoverPhotoID,
+			CreatedAt:    album.CreatedAt,
+			UpdatedAt:    album.UpdatedAt,
+		})
+	}
+
+	return result, nil
+}
+
 func getAlbumByIDStore(albumID int32) (*Album, error) {
 	var album model.Album
 	err := database.DB.First(&album, albumID).Error
@@ -245,7 +267,7 @@ func getAllPhotosMetaByPageStore(page, pageSize int) ([]*model.VPhotosWithDetail
 		return nil, total, gorm.ErrRecordNotFound
 	}
 
-	err = database.DB.Model(&model.VPhotosWithDetail{}).Order("created_at desc").
+	err = database.DB.Model(&model.VPhotosWithDetail{}).Order("shot_at desc").
 		Offset((page - 1) * pageSize).Limit(pageSize).Find(&photos).Error
 	if err != nil {
 		return nil, 0, err
@@ -265,12 +287,41 @@ func getAllPhotoPageNumStore(pageSize int) (int, error) {
 }
 
 func editPhotoByIDStore(newData PhotoEdit) error {
-	newPhoto := model.Photo{
-		Title:       newData.Title,
-		Description: newData.Description,
-		IsFeatured:  newData.IsFeatured,
-		AlbumID:     newData.AlbumID,
-		UpdatedAt:   time.Now(),
+	oldPhoto, err := findPhotoByID(newData.ID)
+	if err != nil {
+		return err
+	}
+
+	var changeAlbum bool
+	if oldPhoto.AlbumID == nil {
+		if *newData.AlbumID == 0 {
+			changeAlbum = false
+		} else {
+			changeAlbum = true
+		}
+	} else {
+		if *oldPhoto.AlbumID == *newData.AlbumID {
+			changeAlbum = false
+		} else {
+			changeAlbum = true
+		}
+	}
+	// if (oldPhoto.AlbumID == nil && *newData.AlbumID == 0) || (*oldPhoto.AlbumID == *newData.AlbumID) {
+	// 	changeAlbum = false
+	// } else {
+	// 	changeAlbum = true
+	// }
+
+	if *newData.AlbumID == 0 {
+		newData.AlbumID = nil
+	}
+
+	updateData := map[string]interface{}{
+		"title":       newData.Title,
+		"description": newData.Description,
+		"is_featured": newData.IsFeatured,
+		"album_id":    newData.AlbumID, // 当 newData.AlbumID 为 nil 时，这里会正确地将 NULL 写入数据库
+		"updated_at":  time.Now(),
 	}
 
 	var oldTagsID []int32
@@ -293,17 +344,14 @@ func editPhotoByIDStore(newData PhotoEdit) error {
 		}
 	}
 
-	err := database.DB.Transaction(func(tx *gorm.DB) error {
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		txq := query.Use(tx)
 
-		txq.Photo.Where(txq.Photo.ID.Eq(newData.ID)).Updates(newPhoto)
-		if newData.AlbumID != nil {
-			exist, err := checkAlbumExists(*newData.AlbumID)
-			if err != nil {
-				return err
-			} else if !exist {
-				return gorm.ErrRecordNotFound
-			}
+		txq.Photo.Where(txq.Photo.ID.Eq(newData.ID)).Updates(updateData)
+		if changeAlbum && oldPhoto.AlbumID != nil {
+			txq.Album.Where(txq.Album.ID.Eq(*oldPhoto.AlbumID)).Updates(map[string]interface{}{"updated_at": time.Now()})
+		}
+		if changeAlbum && newData.AlbumID != nil {
 			txq.Album.Where(txq.Album.ID.Eq(*newData.AlbumID)).Updates(map[string]interface{}{"updated_at": time.Now()})
 		}
 
