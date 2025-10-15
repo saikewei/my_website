@@ -24,7 +24,7 @@
             <el-menu-item index="/admin/album">相册管理</el-menu-item>
           </el-menu-item-group>
         </el-sub-menu>
-        <el-menu-item index="2">
+        <el-menu-item index="/admin/change-password">
           <el-icon><icon-menu /></el-icon>
           <span>修改密码</span>
         </el-menu-item>

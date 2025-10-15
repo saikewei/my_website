@@ -4,6 +4,7 @@ import AdminPage from '../pages/AdminPage.vue';
 import UploadPhoto from '../pages/admin/UploadPhoto.vue';
 import AlbumManagement from '@/pages/admin/AlbumManagement.vue';
 import PhotoManagement from '@/pages/admin/PhotoManagement.vue';
+import ChangePassword from '@/pages/admin/ChangePassword.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +34,10 @@ const router = createRouter({
           path: 'photo-management/:page',
           name: 'PhotoManagement',
           component: PhotoManagement,
+        },
+        {
+          path: 'change-password',
+          component: ChangePassword,
         }
       ]
     }
