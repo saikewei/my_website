@@ -34,6 +34,7 @@ func main() {
 		g.GenerateModel("photos"),
 		g.GenerateModel("tags"),
 		g.GenerateModel("v_photos_with_details"),
+		g.GenerateModel("system_password"),
 	)
 
 	// 执行生成

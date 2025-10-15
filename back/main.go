@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/saikewei/my_website/back/auth"
 	"github.com/saikewei/my_website/back/internal/config"
 	"github.com/saikewei/my_website/back/internal/database"
 	"github.com/saikewei/my_website/back/photo"
@@ -24,6 +25,7 @@ func main() {
 	apiGroup := r.Group("/api")
 
 	photo.RegisterRouters(apiGroup)
+	auth.RegisterAuthRouters(apiGroup)
 
 	r.Run(":9000") // 监听
 }

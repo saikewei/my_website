@@ -21,6 +21,7 @@ var (
 	Photo             *photo
 	PhotoMetadatum    *photoMetadatum
 	PhotoTag          *photoTag
+	SystemPassword    *systemPassword
 	Tag               *tag
 	VPhotosWithDetail *vPhotosWithDetail
 )
@@ -31,6 +32,7 @@ func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	Photo = &Q.Photo
 	PhotoMetadatum = &Q.PhotoMetadatum
 	PhotoTag = &Q.PhotoTag
+	SystemPassword = &Q.SystemPassword
 	Tag = &Q.Tag
 	VPhotosWithDetail = &Q.VPhotosWithDetail
 }
@@ -42,6 +44,7 @@ func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 		Photo:             newPhoto(db, opts...),
 		PhotoMetadatum:    newPhotoMetadatum(db, opts...),
 		PhotoTag:          newPhotoTag(db, opts...),
+		SystemPassword:    newSystemPassword(db, opts...),
 		Tag:               newTag(db, opts...),
 		VPhotosWithDetail: newVPhotosWithDetail(db, opts...),
 	}
@@ -54,6 +57,7 @@ type Query struct {
 	Photo             photo
 	PhotoMetadatum    photoMetadatum
 	PhotoTag          photoTag
+	SystemPassword    systemPassword
 	Tag               tag
 	VPhotosWithDetail vPhotosWithDetail
 }
@@ -67,6 +71,7 @@ func (q *Query) clone(db *gorm.DB) *Query {
 		Photo:             q.Photo.clone(db),
 		PhotoMetadatum:    q.PhotoMetadatum.clone(db),
 		PhotoTag:          q.PhotoTag.clone(db),
+		SystemPassword:    q.SystemPassword.clone(db),
 		Tag:               q.Tag.clone(db),
 		VPhotosWithDetail: q.VPhotosWithDetail.clone(db),
 	}
@@ -87,6 +92,7 @@ func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 		Photo:             q.Photo.replaceDB(db),
 		PhotoMetadatum:    q.PhotoMetadatum.replaceDB(db),
 		PhotoTag:          q.PhotoTag.replaceDB(db),
+		SystemPassword:    q.SystemPassword.replaceDB(db),
 		Tag:               q.Tag.replaceDB(db),
 		VPhotosWithDetail: q.VPhotosWithDetail.replaceDB(db),
 	}
@@ -97,6 +103,7 @@ type queryCtx struct {
 	Photo             *photoDo
 	PhotoMetadatum    *photoMetadatumDo
 	PhotoTag          *photoTagDo
+	SystemPassword    *systemPasswordDo
 	Tag               *tagDo
 	VPhotosWithDetail *vPhotosWithDetailDo
 }
@@ -107,6 +114,7 @@ func (q *Query) WithContext(ctx context.Context) *queryCtx {
 		Photo:             q.Photo.WithContext(ctx),
 		PhotoMetadatum:    q.PhotoMetadatum.WithContext(ctx),
 		PhotoTag:          q.PhotoTag.WithContext(ctx),
+		SystemPassword:    q.SystemPassword.WithContext(ctx),
 		Tag:               q.Tag.WithContext(ctx),
 		VPhotosWithDetail: q.VPhotosWithDetail.WithContext(ctx),
 	}
