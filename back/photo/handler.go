@@ -11,32 +11,35 @@ import (
 	"gorm.io/gorm"
 )
 
-func RegisterRouters(router gin.IRouter) {
-	photoGroup := router.Group("/photo")
+func RegisterRouters(publicGroup, privateGroup gin.IRouter) {
+	publicPhotoGroup := publicGroup.Group("/photo")
 	{
-		photoGroup.POST("/upload", uploadPhoto)
-		photoGroup.POST("/create-album", createAlbum)
-		photoGroup.POST("/:photo_id/album", addPhotoToAlbum)
+		publicPhotoGroup.GET("/albums-id", getAllAlbumsID)
+		publicPhotoGroup.GET("/album/details", getAllAlbumsDetails)
+		publicPhotoGroup.GET("/:photo_id", getPhotoByID)
+		publicPhotoGroup.GET("/:photo_id/thumbnail", getPhotoThumbnailByID)
+		publicPhotoGroup.GET("/album/:album_id", getAlbumByID)
+		publicPhotoGroup.GET("/page", getPhotosByPage)
 
-		photoGroup.GET("/albums-id", getAllAlbumsID)
-		photoGroup.GET("/album/details", getAllAlbumsDetails)
-		photoGroup.GET("/:photo_id", getPhotoByID)
-		photoGroup.GET("/:photo_id/thumbnail", getPhotoThumbnailByID)
-		photoGroup.GET("/album/:album_id", getAlbumByID)
-		photoGroup.GET("/page", getPhotosByPage)
-
-		photoGroup.GET("/test", func(c *gin.Context) {
+		publicPhotoGroup.GET("/test", func(c *gin.Context) {
 			_, total, _ := getAllPhotosMetaByPageStore(1, 5)
 			log.Printf("Total photos: %d", total)
 
 			c.JSON(http.StatusOK, gin.H{"message": "Test endpoint is working!"})
 		})
+	}
 
-		photoGroup.PUT("/edit/album", editAlbum)
-		photoGroup.PUT("/edit/photo", editPhoto)
+	privatePhotoGroup := privateGroup.Group("/photo")
+	{
+		privatePhotoGroup.POST("/upload", uploadPhoto)
+		privatePhotoGroup.POST("/create-album", createAlbum)
+		privatePhotoGroup.POST("/:photo_id/album", addPhotoToAlbum)
 
-		photoGroup.DELETE("/album/:album_id", deleteAlbum)
-		photoGroup.DELETE("/:photo_id", deletePhoto)
+		privatePhotoGroup.PUT("/edit/album", editAlbum)
+		privatePhotoGroup.PUT("/edit/photo", editPhoto)
+
+		privatePhotoGroup.DELETE("/album/:album_id", deleteAlbum)
+		privatePhotoGroup.DELETE("/:photo_id", deletePhoto)
 	}
 }
 

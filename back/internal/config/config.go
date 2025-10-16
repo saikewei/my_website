@@ -14,6 +14,9 @@ type AppConfig struct {
 	Storage struct {
 		PhotoPath string `mapstructure:"photo_path"`
 	} `mapstructure:"storage"`
+	JWT struct {
+		Secret string `mapstructure:"secret"`
+	} `mapstructure:"jwt"`
 }
 
 // C 是一个全局变量，用于在程序各处访问配置

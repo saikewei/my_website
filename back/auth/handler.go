@@ -13,8 +13,30 @@ func RegisterAuthRouters(router gin.IRouter) {
 		// 	createPassword("Hyc65319436")
 		// 	ctx.JSON(http.StatusOK, gin.H{"message": "Create password endpoint"})
 		// })
+		authGroup.POST("/login", login)
 		authGroup.PUT("/change-password", changePassword)
 	}
+}
+
+func login(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	if err := loginStore(&req); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
+		return
+	}
+
+	token, err := GenerateToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func changePassword(c *gin.Context) {

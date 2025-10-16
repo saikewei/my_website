@@ -24,7 +24,10 @@ func main() {
 
 	apiGroup := r.Group("/api")
 
-	photo.RegisterRouters(apiGroup)
+	privateGroup := apiGroup.Group("/")
+	privateGroup.Use(auth.AuthMiddleware())
+	photo.RegisterRouters(apiGroup, privateGroup)
+
 	auth.RegisterAuthRouters(apiGroup)
 
 	r.Run(":9000") // 监听

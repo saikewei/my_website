@@ -51,3 +51,20 @@ func createPassword(password string) error {
 	result := database.DB.Create(&newPassword)
 	return result.Error
 }
+
+func loginStore(req *LoginRequest) error {
+	var currentPassword model.SystemPassword
+	if err := database.DB.First(&currentPassword).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrPasswordNotFound
+		}
+		return err
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(currentPassword.PasswordHash), []byte(req.Password))
+	if err != nil {
+		return ErrIncoreectOldPassword
+	}
+
+	return nil
+}
