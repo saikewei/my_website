@@ -22,6 +22,9 @@ import { ref, reactive } from 'vue';
 import { ElMessage, type FormInstance, type FormRules} from 'element-plus';
 import request from '@/utils/request';
 import { AxiosError } from 'axios';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const formRef = ref<FormInstance>();
 const form = reactive({
@@ -73,6 +76,9 @@ const handleChangePassword = async () => {
         form.newPassword = '';
         form.confirmNewPassword = '';
         // 清除本地存储的token
+        localStorage.removeItem('authToken');
+        // 重定向到登录页面
+        router.push({ name: 'Login' });
     } catch (error) {
         console.error('修改密码失败:', error);
         if(error instanceof AxiosError && error.response?.status === 400) {
