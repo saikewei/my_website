@@ -398,3 +398,29 @@ func deletePhotoByIDStore(photoID int32) error {
 	}
 	return nil
 }
+
+func getPhotosMetaByCursorStore(cursorID int32, limit int, albumID int32) ([]*model.VPhotosWithDetail, error) {
+	var photos []*model.VPhotosWithDetail
+	db := database.DB.Model(&model.VPhotosWithDetail{})
+	if cursorID > 0 {
+		var cursorPhoto model.VPhotosWithDetail
+		err := database.DB.Model(&model.VPhotosWithDetail{}).Where("id = ?", cursorID).First(&cursorPhoto).Error
+		if err != nil {
+			return nil, err
+		}
+
+		db = db.Where("shot_at < ? OR (shot_at = ? AND id < ?)", cursorPhoto.ShotAt, cursorPhoto.ShotAt, cursorPhoto.ID)
+	}
+
+	if albumID != 0 {
+		db = db.Where("album_id = ?", albumID)
+	}
+
+	err := db.Order("shot_at desc, id desc").Limit(limit).Find(&photos).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return photos, nil
+
+}

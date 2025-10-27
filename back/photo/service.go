@@ -135,67 +135,18 @@ func getOrCreateThumbnailService(photoID int32, originalPath string, newSize uin
 	return thumbPath, nil
 }
 
-func getAllPhotosByPageService(page, pageSize int) ([]PhotoAllDataWithThumbnail, int, error) {
-	type result struct {
-		index int
-		data  PhotoAllDataWithThumbnail
-		err   error
-	}
-
+func getAllPhotosByPageService(page, pageSize int) ([]*PhotoAllDataWithThumbnail, int, error) {
 	photos, total, err := getAllPhotosMetaByPageStore(page, pageSize)
 	if err != nil {
 		return nil, 0, err
 	}
 	if len(photos) == 0 {
-		return []PhotoAllDataWithThumbnail{}, 0, nil
+		return []*PhotoAllDataWithThumbnail{}, 0, nil
 	}
 
-	var wg sync.WaitGroup
-
-	resultsChan := make(chan result, len(photos))
-	log.Printf("Starting concurrent processing for %d photos...", len(photos))
-	totalLoopStart := time.Now()
-
-	for i, photo := range photos {
-		wg.Add(1)
-		go func(index int, p *model.VPhotosWithDetail) {
-			defer wg.Done()
-
-			thumbPath, err := getOrCreateThumbnailService(photo.ID, p.FilePath, 0)
-			if err != nil {
-				return
-			}
-
-			thumbBase64, err := imageToBase64(thumbPath)
-			if err != nil {
-				resultsChan <- result{index: index, err: err}
-				return
-			}
-			p.FilePath = "" // 清空原始路径，避免泄露服务器文件结构
-
-			resultsChan <- result{
-				index: index,
-				data: PhotoAllDataWithThumbnail{
-					VPhotosWithDetail: *p,
-					ThumbnailBase64:   thumbBase64,
-				},
-				err: nil,
-			}
-		}(i, photo)
-	}
-	wg.Wait()
-	close(resultsChan)
-
-	log.Printf("All goroutines finished in %s", time.Since(totalLoopStart))
-	finalResults := make([]PhotoAllDataWithThumbnail, len(photos))
-	for res := range resultsChan {
-		if res.err != nil {
-			// 如果任何一个协程失败，我们可以选择立即返回错误
-			log.Printf("Error processing photo at index %d: %v", res.index, res.err)
-			return nil, 0, res.err
-		}
-		// 根据原始索引，将结果放入正确的位置
-		finalResults[res.index] = res.data
+	finalResults, err := getPhotosThumbnailAsync(photos, 0)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return finalResults, int(total), nil
@@ -234,4 +185,79 @@ func editPhotoService(newPhoto PhotoEdit) error {
 	}
 
 	return nil
+}
+
+func getPhotosByCursorService(cursorID int32, limit int, albumID int32) ([]*PhotoAllDataWithThumbnail, error) {
+	photosMeta, err := getPhotosMetaByCursorStore(cursorID, limit, albumID)
+	if err != nil {
+		return []*PhotoAllDataWithThumbnail{}, nil
+	}
+
+	var photosMetaWithThumbnail []*PhotoAllDataWithThumbnail
+	photosMetaWithThumbnail, err = getPhotosThumbnailAsync(photosMeta, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return photosMetaWithThumbnail, nil
+
+}
+
+func getPhotosThumbnailAsync(photos []*model.VPhotosWithDetail, newsize uint) ([]*PhotoAllDataWithThumbnail, error) {
+	type result struct {
+		index int
+		data  PhotoAllDataWithThumbnail
+		err   error
+	}
+
+	var wg sync.WaitGroup
+
+	resultsChan := make(chan result, len(photos))
+	log.Printf("Starting concurrent processing for %d photos...", len(photos))
+	totalLoopStart := time.Now()
+
+	for i, photo := range photos {
+		wg.Add(1)
+		go func(index int, p *model.VPhotosWithDetail) {
+			defer wg.Done()
+
+			thumbPath, err := getOrCreateThumbnailService(p.ID, p.FilePath, newsize)
+			if err != nil {
+				return
+			}
+
+			thumbBase64, err := imageToBase64(thumbPath)
+			if err != nil {
+				resultsChan <- result{index: index, err: err}
+				return
+			}
+			p.FilePath = "" // 清空原始路径，避免泄露服务器文件结构
+
+			resultsChan <- result{
+				index: index,
+				data: PhotoAllDataWithThumbnail{
+					VPhotosWithDetail: *p,
+					ThumbnailBase64:   thumbBase64,
+				},
+				err: nil,
+			}
+		}(i, photo)
+	}
+	wg.Wait()
+	close(resultsChan)
+
+	log.Printf("All goroutines finished in %s", time.Since(totalLoopStart))
+	finalResults := make([]*PhotoAllDataWithThumbnail, len(photos))
+	for res := range resultsChan {
+		if res.err != nil {
+			// 如果任何一个协程失败，我们可以选择立即返回错误
+			log.Printf("Error processing photo at index %d: %v", res.index, res.err)
+			return nil, res.err
+		}
+		// 根据原始索引，将结果放入正确的位置
+		finalResults[res.index] = &res.data
+	}
+
+	return finalResults, nil
 }

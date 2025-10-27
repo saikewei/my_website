@@ -20,6 +20,7 @@ func RegisterRouters(publicGroup, privateGroup gin.IRouter) {
 		publicPhotoGroup.GET("/:photo_id/thumbnail", getPhotoThumbnailByID)
 		publicPhotoGroup.GET("/album/:album_id", getAlbumByID)
 		publicPhotoGroup.GET("/page", getPhotosByPage)
+		publicPhotoGroup.GET("/photos", getPhotosByCursor)
 
 		publicPhotoGroup.GET("/test", func(c *gin.Context) {
 			_, total, _ := getAllPhotosMetaByPageStore(1, 5)
@@ -362,4 +363,50 @@ func deletePhoto(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "照片删除成功！"})
+}
+
+func getPhotosByCursor(c *gin.Context) {
+	limitStr := c.DefaultQuery("limit", "10")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 5 || limit > 40 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 limit 参数，必须在5到40之间"})
+		return
+	}
+
+	cursorStr := c.DefaultQuery("cursor", "0")
+	cursor, err := strconv.ParseInt(cursorStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 cursor 参数"})
+		return
+	}
+
+	albumStr := c.DefaultQuery("album", "0")
+	album, err := strconv.ParseInt(albumStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 album 参数"})
+		return
+	}
+
+	photos, err := getPhotosByCursorService(int32(cursor), limit, int32(album))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var nextCursor int32
+	hasMore := false
+	if len(photos) > 0 {
+		// 如果获取到的数据量等于请求量，我们认为可能还有更多数据
+		if len(photos) == limit {
+			hasMore = true
+			// 将最后一个元素的ID作为下一次请求的游标
+			nextCursor = photos[len(photos)-1].ID
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"photos":      photos,
+		"next_cursor": nextCursor,
+		"has_more":    hasMore,
+	})
 }
