@@ -57,3 +57,8 @@ type PhotoEdit struct {
 	Description *string  `json:"description,omitempty"`
 	AlbumID     *int32   `json:"album_id,omitempty"` // 照片所属相册ID, 关联albums表
 }
+
+type AlbumCover struct {
+	AlbumID      int32 `json:"album_id"`
+	CoverPhotoID int32 `json:"cover_photo_id"`
+}

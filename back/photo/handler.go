@@ -37,6 +37,7 @@ func RegisterRouters(publicGroup, privateGroup gin.IRouter) {
 		privatePhotoGroup.POST("/:photo_id/album", addPhotoToAlbum)
 
 		privatePhotoGroup.PUT("/edit/album", editAlbum)
+		privatePhotoGroup.PUT("/edit/album-cover", editAlbumCover)
 		privatePhotoGroup.PUT("/edit/photo", editPhoto)
 
 		privatePhotoGroup.DELETE("/album/:album_id", deleteAlbum)
@@ -409,4 +410,28 @@ func getPhotosByCursor(c *gin.Context) {
 		"next_cursor": nextCursor,
 		"has_more":    hasMore,
 	})
+}
+
+func editAlbumCover(c *gin.Context) {
+	newCover := AlbumCover{}
+	if err := c.ShouldBindJSON(&newCover); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if newCover.AlbumID == 0 || newCover.CoverPhotoID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID不能为0"})
+	}
+
+	err := editAlbumCoverStore(newCover)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "相册不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "相册封面设置成功！"})
 }

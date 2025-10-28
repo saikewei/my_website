@@ -424,3 +424,16 @@ func getPhotosMetaByCursorStore(cursorID int32, limit int, albumID int32) ([]*mo
 	return photos, nil
 
 }
+
+func editAlbumCoverStore(newCover AlbumCover) error {
+	_, err := findPhotoByID(newCover.CoverPhotoID)
+	if err != nil {
+		return err
+	}
+
+	modelAlbum := model.Album{
+		CoverPhotoID: &newCover.CoverPhotoID,
+	}
+
+	return database.DB.Model(&model.Album{}).Where("id = ?", newCover.AlbumID).Updates(&modelAlbum).Error
+}

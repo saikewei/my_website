@@ -20,6 +20,7 @@
                         </div>
                     </template>
                     <el-button type="text" size="small" @click="onClickEditAlbum(album.id)">编辑</el-button>
+                    <el-button type="text" size="small" style="color:darkcyan" @click="onClickSetCover(album.id)">设置封面</el-button>
                     <el-button type="text" size="small" style="color: red;" @click="onClickDeleteAlbum(album.id)">删除</el-button>
                 </el-card>
             </div>
@@ -48,6 +49,28 @@
         </div>
         </template>
     </el-dialog>
+
+    <el-dialog v-model="dialogCoverVisible" title="选择相册封面" width="60%" @close="resetCoverSelection">
+        <div v-if="dialogCoverVisible" class="cover-photo-container">
+            <el-scrollbar height="50vh">
+                <ul v-infinite-scroll="loadMorePhotos" class="photo-list" :infinite-scroll-disabled="!hasMorePhotos">
+                    <li v-for="photo in coverPhotos" :key="photo.id"  @click="selectPhoto(photo.id)"
+                        :class="{ 'selected': photo.id === selectedPhotoId }">
+                        <el-image :src="photo.thumbnail_base64" fit="cover" class="cover-photo-item" />
+                    </li>
+                </ul>
+                <p v-if="!hasMorePhotos" class="load-tip">没有更多照片了</p>
+            </el-scrollbar>
+        </div>
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="dialogCoverVisible = false;resetCoverSelection;">取消</el-button>
+                <el-button type="primary" @click="confirmSetCover" :disabled="!selectedPhotoId">
+                    确定
+                </el-button>
+            </div>
+        </template>
+    </el-dialog>
 </template>
 <script setup lang="ts">
 import { onBeforeMount, ref, reactive } from 'vue';
@@ -56,8 +79,42 @@ import { Picture as IconPicture } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+interface Photo {
+    id: number;
+    album_id: number | null;
+    title: string;
+    description: string | null;
+    file_path: string;
+    file_name: string;
+    file_size: number;
+    width: number;
+    height: number;
+    is_featured: boolean;
+    shot_at: string | null;
+    created_at: string;
+    updated_at: string;
+    camera: string | null;
+    lens: string | null;
+    focal_length: string | null;
+    aperture: string | null;
+    shutter_speed: string | null;
+    iso: string | null;
+    exposure_bias: string | null;
+    flash_fired: boolean | null;
+    gps_latitude: number | null;
+    gps_longitude: number | null;
+    tags: string | null; // 从后端视图看，这是一个逗号分隔的字符串
+    thumbnail_base64: string; // Service层添加的字段
+}
+
+interface PhotoCursorApiResponse {
+    has_more: boolean;
+    next_cursor: number;
+    photos: Photo[];
+}
+
 type AlbumIdResponse = {
-            albums_id: number[];
+    albums_id: number[];
 };
 
 type Album = {
@@ -101,6 +158,68 @@ const formLabelWidth = '140px'
 
 const albumIds = ref<number[]>([]);
 const albums = ref<Album[]>([]);
+
+const dialogCoverVisible = ref(false)
+const hasMorePhotos = ref(true)
+const nextCursor = ref<number>(0);
+const coverPhotos = ref<Photo[]>([]);
+const selectedPhotoId = ref<number | null>(null);
+
+const onClickSetCover = (albumId: number) => {
+    currentAlbumId.value = albumId;
+    dialogCoverVisible.value = true;
+    loadMorePhotos();
+}
+
+const loadMorePhotos = async () => {
+    if (!hasMorePhotos.value) return;
+
+    try {
+        const response = await request.get('/photo/photos', {
+            params: {
+                limit: 20,
+                cursor: nextCursor.value
+            }
+        }) as PhotoCursorApiResponse;
+
+        coverPhotos.value.push(...response.photos);
+        nextCursor.value = response.next_cursor;
+        hasMorePhotos.value = response.has_more;
+    } catch (error) {
+        console.error('Failed to load more photos:', error);
+        ElMessage.error('加载照片失败');
+    }
+}
+
+const selectPhoto = (photoId: number) => {
+    selectedPhotoId.value = photoId;
+}
+
+const confirmSetCover = async () => {
+    try {
+        await request.put('/photo/edit/album-cover', {
+            album_id: currentAlbumId.value,
+            cover_photo_id: selectedPhotoId.value
+        });
+
+        ElMessage.success('封面设置成功！');
+        dialogCoverVisible.value = false;
+        resetCoverSelection();
+        fetchAlbumIds();
+    } catch (error) {
+        console.error('Failed to change cover:', error);
+        ElMessage.error('设置封面失败！');
+    }
+}
+
+const resetCoverSelection = () => {
+    coverPhotos.value = [];
+    nextCursor.value = 0;
+    hasMorePhotos.value = true;
+    selectedPhotoId.value = null;
+    currentAlbumId.value = null;
+}
+
 const fetchAlbumIds = async () => {
     try {
         const response = await request.get('/photo/albums-id') as AlbumIdResponse;
@@ -270,5 +389,38 @@ onBeforeMount(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     word-break: break-all; /* 允许在单词内换行 */
+}
+
+.cover-photo-container {
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+}
+
+.photo-list {
+    list-style: none;
+    padding: 10px;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.cover-photo-item {
+    width: 120px;
+    height: 120px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.photo-list li.selected .cover-photo-item {
+    border-color: #409eff; /* Element Plus 主题色 */
+}
+
+.load-tip {
+    text-align: center;
+    color: #999;
+    padding: 15px 0;
 }
 </style>
